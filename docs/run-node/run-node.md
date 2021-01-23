@@ -53,7 +53,7 @@ Now that your account has some tokens, you need to add a validator to your chain
 
 ```bash
 # Create a gentx.
-simd gentx my_validator --amount 100000stake --chain-id my-test-chain --keyring-backend test
+simd gentx my_validator 100000stake --chain-id my-test-chain --keyring-backend test
 
 # Add the gentx to the genesis file.
 simd collect-gentxs
@@ -84,6 +84,12 @@ You should see blocks come in.
 The previous command allow you to run a single node. This is enough for the next section on interacting with this node, but you may wish to run multiple nodes at the same time, and see how consensus happens between them.
 
 The naive way would be to run the same commands again in separate terminal windows. This is possible, however in the SDK, we leverage the power of [Docker Compose](https://docs.docker.com/compose/) to run a localnet. If you need inspiration on how to set up your own localnet with Docker Compose, you can have a look at the SDK's [`docker-compose.yml`](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0-rc3/docker-compose.yml).
+
+## Configuring the Node Using `app.toml`
+
+The Cosmos SDK automatically generates an `app.toml` file inside `~/.simapp/config`. This file is used to configure your app, such as state pruning strategies, telemetry, gRPC and REST servers configuration, state sync... The file itself is heavily commented, please refer to it directly to tweak your node.
+
+Make sure to restart your node after modifying `app.toml`.
 
 ## Next {hide}
 
