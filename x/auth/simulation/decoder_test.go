@@ -37,7 +37,7 @@ func TestDecodeStore(t *testing.T) {
 	acc := types.NewBaseAccountWithAddress(delAddr1)
 	dec := simulation.NewDecodeStore(accountKeeper)
 
-	accBz, err := accountKeeper.MarshalAccount(acc)
+	accBz, err := accountKeeper.AccountsState.ValueCodec().Encode(acc)
 	require.NoError(t, err)
 
 	globalAccNumber := gogotypes.UInt64Value{Value: 10}

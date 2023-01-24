@@ -66,7 +66,7 @@ func (m Migrator) V45_SetAccount(ctx sdk.Context, acc sdk.AccountI) error { //no
 	addr := acc.GetAddress()
 	store := ctx.KVStore(m.keeper.storeKey)
 
-	bz, err := m.keeper.MarshalAccount(acc)
+	bz, err := m.keeper.AccountsState.ValueCodec().Encode(acc)
 	if err != nil {
 		return err
 	}
