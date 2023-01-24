@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"cosmossdk.io/collections"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
 	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -65,6 +67,10 @@ type AccountKeeper struct {
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
 	authority string
+
+	// State
+
+	ParamsState collections.Item[types.Params]
 }
 
 var _ AccountKeeperI = &AccountKeeper{}
@@ -86,6 +92,8 @@ func NewAccountKeeper(
 
 	bech32Codec := newBech32Codec(bech32Prefix)
 
+	sb := collections.NewSchemaBuilder(runtime.NewKVStoreService(storeKey))
+
 	return AccountKeeper{
 		storeKey:   storeKey,
 		proto:      proto,
@@ -93,6 +101,8 @@ func NewAccountKeeper(
 		permAddrs:  permAddrs,
 		addressCdc: bech32Codec,
 		authority:  authority,
+
+		ParamsState: collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 }
 

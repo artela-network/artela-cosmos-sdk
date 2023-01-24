@@ -11,20 +11,11 @@ func (ak AccountKeeper) SetParams(ctx sdk.Context, params types.Params) error {
 		return err
 	}
 
-	store := ctx.KVStore(ak.storeKey)
-	bz := ak.cdc.MustMarshal(&params)
-	store.Set(types.ParamsKey, bz)
-
-	return nil
+	return ak.ParamsState.Set(ctx, params)
 }
 
 // GetParams gets the auth module's parameters.
 func (ak AccountKeeper) GetParams(ctx sdk.Context) (params types.Params) {
-	store := ctx.KVStore(ak.storeKey)
-	bz := store.Get(types.ParamsKey)
-	if bz == nil {
-		return params
-	}
-	ak.cdc.MustUnmarshal(bz, &params)
-	return params
+	params, _ = ak.ParamsState.Get(ctx)
+	return
 }
