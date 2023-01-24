@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
-	gogotypes "github.com/cosmos/gogoproto/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -70,7 +69,8 @@ type AccountKeeper struct {
 
 	// State
 
-	ParamsState collections.Item[types.Params]
+	ParamsState   collections.Item[types.Params]
+	AccountNumber collections.Sequence
 }
 
 var _ AccountKeeperI = &AccountKeeper{}
@@ -102,7 +102,8 @@ func NewAccountKeeper(
 		addressCdc: bech32Codec,
 		authority:  authority,
 
-		ParamsState: collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
+		ParamsState:   collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
+		AccountNumber: collections.NewSequence(sb, types.GlobalAccountNumberKey, "global_account_number"),
 	}
 }
 
@@ -139,28 +140,8 @@ func (ak AccountKeeper) GetSequence(ctx sdk.Context, addr sdk.AccAddress) (uint6
 // NextAccountNumber returns and increments the global account number counter.
 // If the global account number is not set, it initializes it with value 0.
 func (ak AccountKeeper) NextAccountNumber(ctx sdk.Context) uint64 {
-	var accNumber uint64
-	store := ctx.KVStore(ak.storeKey)
-
-	bz := store.Get(types.GlobalAccountNumberKey)
-	if bz == nil {
-		// initialize the account numbers
-		accNumber = 0
-	} else {
-		val := gogotypes.UInt64Value{}
-
-		err := ak.cdc.Unmarshal(bz, &val)
-		if err != nil {
-			panic(err)
-		}
-
-		accNumber = val.GetValue()
-	}
-
-	bz = ak.cdc.MustMarshal(&gogotypes.UInt64Value{Value: accNumber + 1})
-	store.Set(types.GlobalAccountNumberKey, bz)
-
-	return accNumber
+	num, _ := ak.AccountNumber.Next(ctx)
+	return num
 }
 
 // GetModulePermissions fetches per-module account permissions.

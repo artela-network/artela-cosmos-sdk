@@ -35,7 +35,7 @@ func NewDecodeStore(ak AuthUnmarshaler) func(kvA, kvB kv.Pair) string {
 
 			return fmt.Sprintf("%v\n%v", accA, accB)
 
-		case bytes.Equal(kvA.Key, types.GlobalAccountNumberKey):
+		case bytes.Equal(kvA.Key, types.GlobalAccountNumberKey.Bytes()):
 			var globalAccNumberA, globalAccNumberB gogotypes.UInt64Value
 			ak.GetCodec().MustUnmarshal(kvA.Value, &globalAccNumberA)
 			ak.GetCodec().MustUnmarshal(kvB.Value, &globalAccNumberB)

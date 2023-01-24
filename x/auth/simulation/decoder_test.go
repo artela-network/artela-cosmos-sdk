@@ -49,7 +49,7 @@ func TestDecodeStore(t *testing.T) {
 				Value: accBz,
 			},
 			{
-				Key:   types.GlobalAccountNumberKey,
+				Key:   types.GlobalAccountNumberKey.Bytes(),
 				Value: cdc.MustMarshal(&globalAccNumber),
 			},
 			{
