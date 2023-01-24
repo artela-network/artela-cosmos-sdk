@@ -22,7 +22,7 @@ type AuthUnmarshaler interface {
 func NewDecodeStore(ak AuthUnmarshaler) func(kvA, kvB kv.Pair) string {
 	return func(kvA, kvB kv.Pair) string {
 		switch {
-		case bytes.Equal(kvA.Key[:1], types.AddressStoreKeyPrefix):
+		case bytes.Equal(kvA.Key[:1], types.AddressStoreKeyPrefix.Bytes()):
 			accA, err := ak.UnmarshalAccount(kvA.Value)
 			if err != nil {
 				panic(err)
@@ -42,7 +42,7 @@ func NewDecodeStore(ak AuthUnmarshaler) func(kvA, kvB kv.Pair) string {
 
 			return fmt.Sprintf("GlobalAccNumberA: %d\nGlobalAccNumberB: %d", globalAccNumberA, globalAccNumberB)
 
-		case bytes.HasPrefix(kvA.Key, types.AccountNumberStoreKeyPrefix):
+		case bytes.HasPrefix(kvA.Key, types.AccountNumberStoreKeyPrefix.Bytes()):
 			var accNumA, accNumB sdk.AccAddress
 			err := accNumA.Unmarshal(kvA.Value)
 			if err != nil {

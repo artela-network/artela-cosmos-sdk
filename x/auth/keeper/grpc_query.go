@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"google.golang.org/grpc/codes"
@@ -44,26 +43,20 @@ func (ak AccountKeeper) Accounts(c context.Context, req *types.QueryAccountsRequ
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	store := ctx.KVStore(ak.storeKey)
-	accountsStore := prefix.NewStore(store, types.AddressStoreKeyPrefix)
-
-	var accounts []*codectypes.Any
-	pageRes, err := query.Paginate(accountsStore, req.Pagination, func(key, value []byte) error {
-		account := ak.decodeAccount(value)
-		any, err := codectypes.NewAnyWithValue(account)
-		if err != nil {
-			return err
-		}
-
-		accounts = append(accounts, any)
-		return nil
-	})
+	accounts, pageRes, err := query.CollectionPaginate[sdk.AccAddress, sdk.AccountI](c, ak.AccountsState, req.Pagination)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "paginate: %v", err)
+		return nil, err
+	}
+	accountsAnys := make([]*codectypes.Any, len(accounts))
+	for i, account := range accounts {
+		asAny, err := codectypes.NewAnyWithValue(account.Value)
+		if err != nil {
+			return nil, err
+		}
+		accountsAnys[i] = asAny
 	}
 
-	return &types.QueryAccountsResponse{Accounts: accounts, Pagination: pageRes}, err
+	return &types.QueryAccountsResponse{Accounts: accountsAnys, Pagination: pageRes}, err
 }
 
 // Account returns account details based on address

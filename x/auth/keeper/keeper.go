@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"cosmossdk.io/collections"
+	"cosmossdk.io/collections/indexes"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
@@ -36,9 +37,6 @@ type AccountKeeperI interface {
 	// Remove an account from the store.
 	RemoveAccount(sdk.Context, sdk.AccountI)
 
-	// Iterate over all accounts, calling the provided function. Stop iteration when it returns true.
-	IterateAccounts(sdk.Context, func(sdk.AccountI) bool)
-
 	// Fetch the public key of an account at a specified address
 	GetPubKey(sdk.Context, sdk.AccAddress) (cryptotypes.PubKey, error)
 
@@ -50,6 +48,15 @@ type AccountKeeperI interface {
 
 	// GetModulePermissions fetches per-module account permissions
 	GetModulePermissions() map[string]types.PermissionsForAddress
+}
+
+type AccountsIndexes struct {
+	// Number is a unique index that maps the account number to the account.
+	Number *indexes.Unique[uint64, sdk.AccAddress, sdk.AccountI]
+}
+
+func (a AccountsIndexes) IndexesList() []collections.Index[sdk.AccAddress, sdk.AccountI] {
+	return []collections.Index[sdk.AccAddress, sdk.AccountI]{a.Number}
 }
 
 // AccountKeeper encodes/decodes accounts using the go-amino (binary)
@@ -71,6 +78,7 @@ type AccountKeeper struct {
 
 	ParamsState   collections.Item[types.Params]
 	AccountNumber collections.Sequence
+	AccountsState *collections.IndexedMap[sdk.AccAddress, sdk.AccountI, AccountsIndexes]
 }
 
 var _ AccountKeeperI = &AccountKeeper{}
@@ -104,6 +112,15 @@ func NewAccountKeeper(
 
 		ParamsState:   collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 		AccountNumber: collections.NewSequence(sb, types.GlobalAccountNumberKey, "global_account_number"),
+		AccountsState: collections.NewIndexedMap(
+			sb, types.AddressStoreKeyPrefix, "accounts", sdk.AccAddressKey, codec.CollInterfaceValue[sdk.AccountI](cdc),
+			AccountsIndexes{
+				Number: indexes.NewUnique(
+					sb, types.AccountNumberStoreKeyPrefix, "accounts_by_number", collections.Uint64Key, sdk.AccAddressKey,
+					func(_ sdk.AccAddress, v sdk.AccountI) (uint64, error) {
+						return v.GetAccountNumber(), nil
+					}),
+			}),
 	}
 }
 

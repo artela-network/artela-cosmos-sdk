@@ -57,6 +57,17 @@ func (m *IndexedMap[PrimaryKey, Value, Idx]) Iterate(ctx context.Context, ranger
 	return m.m.Iterate(ctx, ranger)
 }
 
+func (m *IndexedMap[PrimaryKey, Value, Idx]) IterateRaw(ctx context.Context, start, end []byte, order Order) (Iterator[PrimaryKey, Value], error) {
+	return m.m.IterateRaw(ctx, start, end, order)
+}
+
+func (m *IndexedMap[PrimaryKey, Value, Idx]) KeyCodec() KeyCodec[PrimaryKey] {
+	return m.m.KeyCodec()
+}
+func (m *IndexedMap[PrimaryKey, Value, Idx]) ValueCodec() ValueCodec[Value] {
+	return m.m.ValueCodec()
+}
+
 func (m *IndexedMap[PrimaryKey, Value, Idx]) Set(ctx context.Context, pk PrimaryKey, value Value) error {
 	// we need to see if there was a previous instance of the value
 	oldValue, err := m.m.Get(ctx, pk)

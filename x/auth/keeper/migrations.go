@@ -25,24 +25,23 @@ func NewMigrator(keeper AccountKeeper, queryServer grpc.Server, ss exported.Subs
 
 // Migrate1to2 migrates from version 1 to 2.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
-	var iterErr error
-
-	m.keeper.IterateAccounts(ctx, func(account sdk.AccountI) (stop bool) {
-		wb, err := v2.MigrateAccount(ctx, account, m.queryServer)
+	iter, err := m.keeper.AccountsState.Iterate(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		v, err := iter.Value()
 		if err != nil {
-			iterErr = err
-			return true
+			return err
 		}
-
-		if wb == nil {
-			return false
+		wb, err := v2.MigrateAccount(ctx, v, m.queryServer)
+		if err != nil {
+			return err
 		}
-
 		m.keeper.SetAccount(ctx, wb)
-		return false
-	})
-
-	return iterErr
+	}
+	return nil
 }
 
 // Migrate2to3 migrates from consensus version 2 to version 3. Specifically, for each account
@@ -72,6 +71,10 @@ func (m Migrator) V45_SetAccount(ctx sdk.Context, acc sdk.AccountI) error { //no
 		return err
 	}
 
-	store.Set(types.AddressStoreKey(addr), bz)
+	store.Set(addressStoreKey(addr), bz)
 	return nil
+}
+
+func addressStoreKey(addr sdk.AccAddress) []byte {
+	return append(types.AddressStoreKeyPrefix.Bytes(), addr.Bytes()...)
 }

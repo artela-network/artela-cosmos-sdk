@@ -39,11 +39,19 @@ func (ak AccountKeeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	params := ak.GetParams(ctx)
 
 	var genAccounts types.GenesisAccounts
-	ak.IterateAccounts(ctx, func(account sdk.AccountI) bool {
-		genAccount := account.(types.GenesisAccount)
-		genAccounts = append(genAccounts, genAccount)
-		return false
-	})
+	iter, err := ak.AccountsState.Iterate(ctx, nil)
+	if err != nil {
+		panic(err)
+	}
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		v, err := iter.Value()
+		if err != nil {
+			panic(err)
+		}
+		genAccounts = append(genAccounts, v.(types.GenesisAccount))
+	}
 
 	return types.NewGenesisState(params, genAccounts)
 }
