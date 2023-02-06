@@ -19,6 +19,7 @@ var DefaultSignModes = []signingtypes.SignMode{
 	// want to use textual for **TESTING** purposes, feel free to create a
 	// handler that includes SIGN_MODE_TEXTUAL.
 	// ref: Tracking issue for SIGN_MODE_TEXTUAL https://github.com/cosmos/cosmos-sdk/issues/11970
+	signingtypes.SignMode_SIGN_MODE_TEXTUAL,
 }
 
 // makeSignModeHandler returns the default protobuf SignModeHandler supporting
