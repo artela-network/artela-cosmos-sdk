@@ -42,8 +42,7 @@ type ModuleDB interface {
 	//   }
 	GenesisHandler() appmodule.HasGenesis
 
-	AutoMigrate(context.Context) error
-	MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord) error
+	Migrate(context.Context, MigrateOptions) error
 
 	private()
 }

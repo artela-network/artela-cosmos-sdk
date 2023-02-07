@@ -12,16 +12,21 @@ import (
 	"github.com/cosmos/cosmos-sdk/orm/model/ormtable"
 )
 
-func (m moduleDB) AutoMigrate(ctx context.Context) error {
-	schema, err := m.readSchema(ctx)
-	if err != nil {
-		return err
-	}
-
-	return m.MigrateFrom(ctx, schema)
+type MigrateOptions struct {
+	ForceOldSchema *ormv1alpha1.ModuleSchemaRecord
+	ForceDelete    bool
 }
 
-func (m moduleDB) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord) error {
+func (m moduleDB) Migrate(ctx context.Context, opts MigrateOptions) error {
+	oldSchema := opts.ForceOldSchema
+	if oldSchema == nil {
+		var err error
+		oldSchema, err = m.readSchema(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
 	if oldSchema != nil && oldSchema.Version > 0 {
 		return fmt.Errorf("do not know how to migrate from a schema with version %d", oldSchema.Version)
 	}
@@ -38,7 +43,11 @@ func (m moduleDB) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.Module
 	for _, id := range oldFileIds {
 		_, ok := m.filesById[id]
 		if !ok {
-			// TODO remove file
+			if !opts.ForceDelete {
+				return fmt.Errorf("removing schema file %s is disallowed, use the force delete option to override this", oldFilesMap[id].ProtoFilePath)
+			}
+
+			// TODO force delete file
 			//kvStore := m.kvStoreService.OpenKVStore(ctx)
 		}
 	}
@@ -58,7 +67,7 @@ func (m moduleDB) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.Module
 			continue
 		}
 
-		fileSchema, err := fileDb.MigrateFrom(ctx, oldFilesMap[id])
+		fileSchema, err := fileDb.Migrate(ctx, oldFilesMap[id], opts.ForceDelete)
 		if err != nil {
 			return err
 		}
@@ -69,19 +78,19 @@ func (m moduleDB) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.Module
 	return m.saveSchema(ctx, newSchema)
 }
 
-func (f fileDescriptorDB) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord_FileRecord) (*ormv1alpha1.ModuleSchemaRecord_FileRecord, error) {
+func (f fileDescriptorDB) Migrate(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord_FileRecord, forceDelete bool) (*ormv1alpha1.ModuleSchemaRecord_FileRecord, error) {
 	if oldSchema != nil && oldSchema.ProtoFilePath != f.fileDescriptor.Path() {
 		return nil, fmt.Errorf("can't migrate from schema proto file %s to %s", oldSchema.ProtoFilePath, f.fileDescriptor.Path())
 	}
 
-	oldSchemasMap := map[uint32]*ormv1alpha1.ModuleSchemaRecord_TableRecord{}
+	oldTablesMap := map[uint32]*ormv1alpha1.ModuleSchemaRecord_TableRecord{}
 	if oldSchema != nil {
 		for _, record := range oldSchema.Tables {
-			oldSchemasMap[record.Id] = record
+			oldTablesMap[record.Id] = record
 		}
 	}
 
-	oldTableIds := maps.Keys(oldSchemasMap)
+	oldTableIds := maps.Keys(oldTablesMap)
 	slices.Sort(oldTableIds)
 
 	newTables := map[uint32]ormtable.Table{}
@@ -96,13 +105,17 @@ func (f fileDescriptorDB) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha
 	for _, id := range oldTableIds {
 		_, ok := newTables[id]
 		if !ok {
+			if !forceDelete {
+				return nil, fmt.Errorf("removing table %s is disallowed, use the force delete option to override this", oldTablesMap[id].ProtoMsgName)
+			}
+
 			// TODO remove deleted table
 			//kvStore := db.kvStoreService.OpenKVStore(ctx)
 		}
 	}
 
 	for _, id := range newTableIds {
-		oldSchema := oldSchemasMap[id]
+		oldSchema := oldTablesMap[id]
 		newTable := newTables[id]
 
 		newTableMigrate := newTable.(interface {

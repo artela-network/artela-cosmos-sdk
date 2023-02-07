@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/orm/model/ormlist"
 )
 
-func (t *tableImpl) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord_TableRecord) (*ormv1alpha1.ModuleSchemaRecord_TableRecord, error) {
+func (t *tableImpl) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord_TableRecord, forceDelete bool) (*ormv1alpha1.ModuleSchemaRecord_TableRecord, error) {
 	msgName := string(t.MessageType().Descriptor().FullName())
 	newTableDesc := t.tableDesc
 	newSchema := &ormv1alpha1.ModuleSchemaRecord_TableRecord{
@@ -63,7 +63,16 @@ func (t *tableImpl) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.Modu
 		oldIndex := oldIndexes[id]
 		newIndex, ok := newIndexes[id]
 		if !ok {
-			return nil, fmt.Errorf("index %d removed on table %s - removing an index is not a valid migration because it breaks client APIs", id, msgName)
+			if !forceDelete {
+				return nil, fmt.Errorf("index %d removed on table %s - removing an index is not a valid migration because it breaks client APIs, use the force delete option to override this", id, msgName)
+			}
+
+			// force delete removed index
+			idx := t.indexesById[id]
+			err := idx.DeleteBy(ctx)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if !keysEqual(oldIndex.Fields, newIndex.Fields) {
