@@ -97,7 +97,7 @@ func (f fileDescriptorDB) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha
 		_, ok := newTables[id]
 		if !ok {
 			// TODO remove deleted table
-			//kvStore := m.kvStoreService.OpenKVStore(ctx)
+			//kvStore := db.kvStoreService.OpenKVStore(ctx)
 		}
 	}
 

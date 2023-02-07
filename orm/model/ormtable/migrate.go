@@ -63,12 +63,7 @@ func (t *tableImpl) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.Modu
 		oldIndex := oldIndexes[id]
 		newIndex, ok := newIndexes[id]
 		if !ok {
-			// delete removed index
-			idx := t.indexesById[id]
-			err := idx.DeleteBy(ctx)
-			if err != nil {
-				return nil, err
-			}
+			return nil, fmt.Errorf("index %d removed on table %s - removing an index is not a valid migration because it breaks client APIs", id, msgName)
 		}
 
 		if !keysEqual(oldIndex.Fields, newIndex.Fields) {

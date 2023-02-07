@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package testpb;
+
+import "cosmos/orm/v1/orm.proto";
+
+message Table1 {
+  option (cosmos.orm.v1.table) = {
+    id: 1;
+    primary_key: {fields: "foo"}
+    index: {id: 1 fields: "bar"}
+  };
+
+  string foo = 1;
+  string bar = 2;
+  uint64 baz = 3;
+}
