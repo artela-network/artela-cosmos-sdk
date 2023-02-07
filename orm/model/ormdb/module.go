@@ -42,6 +42,10 @@ type ModuleDB interface {
 	//   }
 	GenesisHandler() appmodule.HasGenesis
 
+	AutoMigrate(context.Context) error
+	MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord) error
+	SaveSchema(context.Context) error
+
 	private()
 }
 
@@ -49,6 +53,8 @@ type moduleDB struct {
 	prefix       []byte
 	filesById    map[uint32]*fileDescriptorDB
 	tablesByName map[protoreflect.FullName]ormtable.Table
+	schemaCodec  *ormkv.SchemaCodec
+	schemaRecord *ormv1alpha1.ModuleSchemaRecord
 }
 
 // ModuleDBOptions are options for constructing a ModuleDB.
@@ -85,6 +91,10 @@ func NewModuleDB(schema *ormv1alpha1.ModuleSchemaDescriptor, options ModuleDBOpt
 		prefix:       prefix,
 		filesById:    map[uint32]*fileDescriptorDB{},
 		tablesByName: map[protoreflect.FullName]ormtable.Table{},
+		schemaCodec:  ormkv.NewSchemaCodec(prefix),
+		schemaRecord: &ormv1alpha1.ModuleSchemaRecord{
+			Version: 0,
+		},
 	}
 
 	fileResolver := options.FileResolver
@@ -189,6 +199,10 @@ func (m moduleDB) DecodeEntry(k, v []byte) (ormkv.Entry, error) {
 
 	if id > math.MaxUint32 {
 		return nil, ormerrors.UnexpectedDecodePrefix.Wrapf("uint32 varint id out of range %d", id)
+	}
+
+	if id == 0 {
+		return m.schemaCodec.DecodeEntry(k, v)
 	}
 
 	fileSchema, ok := m.filesById[uint32(id)]

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	ormv1alpha1 "cosmossdk.io/api/cosmos/orm/v1alpha1"
 	"github.com/cosmos/cosmos-sdk/orm/internal/stablejson"
 
 	"google.golang.org/protobuf/proto"
@@ -132,4 +133,18 @@ func (s *SeqEntry) String() string {
 	return fmt.Sprintf("SEQ %s %d", s.TableName, s.Value)
 }
 
-var _, _, _ Entry = &PrimaryKeyEntry{}, &IndexKeyEntry{}, &SeqEntry{}
+type SchemaEntry struct {
+	Schema *ormv1alpha1.ModuleSchemaRecord
+}
+
+func (s *SchemaEntry) String() string {
+	return fmt.Sprintf("SCHEMA")
+}
+
+func (s *SchemaEntry) GetTableName() protoreflect.FullName {
+	return ""
+}
+
+func (s *SchemaEntry) doNotImplement() {}
+
+var _, _, _, _ Entry = &PrimaryKeyEntry{}, &IndexKeyEntry{}, &SeqEntry{}, &SchemaEntry{}

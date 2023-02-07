@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package cosmos.orm.v1alpha1;
+
+import "cosmos/orm/v1/orm.proto";
+
+message ModuleSchemaRecord {
+  uint64 version = 1;
+  repeated FileRecord files = 2;
+
+  message FileRecord {
+    uint32 id = 1;
+    string proto_file_name = 2;
+    TableRecord tables = 3;
+  }
+
+  message TableRecord {
+    string proto_msg_name = 1;
+    oneof descriptor {
+      cosmos.orm.v1.TableDescriptor table = 2;
+      cosmos.orm.v1.SingletonDescriptor singleton = 3;
+    }
+  }
+}
