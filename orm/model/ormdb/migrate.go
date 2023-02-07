@@ -20,6 +20,10 @@ func (m moduleDB) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.Module
 	return m.saveSchema(ctx)
 }
 
+func (f fileDescriptorDB) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord_FileRecord) (*ormv1alpha1.ModuleSchemaRecord_FileRecord, error) {
+	return nil, nil
+}
+
 func (m moduleDB) saveSchema(ctx context.Context) error {
 	return nil
 }
