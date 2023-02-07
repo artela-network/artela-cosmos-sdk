@@ -51,3 +51,7 @@ func (s SchemaCodec) EncodeEntry(entry Entry) (k, v []byte, err error) {
 
 	return s.prefix, bz, nil
 }
+
+func (s SchemaCodec) Prefix() []byte {
+	return s.prefix
+}

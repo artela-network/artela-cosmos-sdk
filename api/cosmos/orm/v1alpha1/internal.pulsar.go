@@ -555,6 +555,57 @@ func (x *fastReflection_ModuleSchemaRecord) ProtoMethods() *protoiface.Methods {
 	}
 }
 
+var _ protoreflect.List = (*_ModuleSchemaRecord_FileRecord_3_list)(nil)
+
+type _ModuleSchemaRecord_FileRecord_3_list struct {
+	list *[]*ModuleSchemaRecord_TableRecord
+}
+
+func (x *_ModuleSchemaRecord_FileRecord_3_list) Len() int {
+	if x.list == nil {
+		return 0
+	}
+	return len(*x.list)
+}
+
+func (x *_ModuleSchemaRecord_FileRecord_3_list) Get(i int) protoreflect.Value {
+	return protoreflect.ValueOfMessage((*x.list)[i].ProtoReflect())
+}
+
+func (x *_ModuleSchemaRecord_FileRecord_3_list) Set(i int, value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*ModuleSchemaRecord_TableRecord)
+	(*x.list)[i] = concreteValue
+}
+
+func (x *_ModuleSchemaRecord_FileRecord_3_list) Append(value protoreflect.Value) {
+	valueUnwrapped := value.Message()
+	concreteValue := valueUnwrapped.Interface().(*ModuleSchemaRecord_TableRecord)
+	*x.list = append(*x.list, concreteValue)
+}
+
+func (x *_ModuleSchemaRecord_FileRecord_3_list) AppendMutable() protoreflect.Value {
+	v := new(ModuleSchemaRecord_TableRecord)
+	*x.list = append(*x.list, v)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_ModuleSchemaRecord_FileRecord_3_list) Truncate(n int) {
+	for i := n; i < len(*x.list); i++ {
+		(*x.list)[i] = nil
+	}
+	*x.list = (*x.list)[:n]
+}
+
+func (x *_ModuleSchemaRecord_FileRecord_3_list) NewElement() protoreflect.Value {
+	v := new(ModuleSchemaRecord_TableRecord)
+	return protoreflect.ValueOfMessage(v.ProtoReflect())
+}
+
+func (x *_ModuleSchemaRecord_FileRecord_3_list) IsValid() bool {
+	return x.list != nil
+}
+
 var (
 	md_ModuleSchemaRecord_FileRecord                 protoreflect.MessageDescriptor
 	fd_ModuleSchemaRecord_FileRecord_id              protoreflect.FieldDescriptor
@@ -647,8 +698,8 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Range(f func(protoreflect
 			return
 		}
 	}
-	if x.Tables != nil {
-		value := protoreflect.ValueOfMessage(x.Tables.ProtoReflect())
+	if len(x.Tables) != 0 {
+		value := protoreflect.ValueOfList(&_ModuleSchemaRecord_FileRecord_3_list{list: &x.Tables})
 		if !f(fd_ModuleSchemaRecord_FileRecord_tables, value) {
 			return
 		}
@@ -673,7 +724,7 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Has(fd protoreflect.Field
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_path":
 		return x.ProtoFilePath != ""
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.tables":
-		return x.Tables != nil
+		return len(x.Tables) != 0
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord"))
@@ -719,8 +770,11 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Get(descriptor protorefle
 		value := x.ProtoFilePath
 		return protoreflect.ValueOfString(value)
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.tables":
-		value := x.Tables
-		return protoreflect.ValueOfMessage(value.ProtoReflect())
+		if len(x.Tables) == 0 {
+			return protoreflect.ValueOfList(&_ModuleSchemaRecord_FileRecord_3_list{})
+		}
+		listValue := &_ModuleSchemaRecord_FileRecord_3_list{list: &x.Tables}
+		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord"))
@@ -746,7 +800,9 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Set(fd protoreflect.Field
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_path":
 		x.ProtoFilePath = value.Interface().(string)
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.tables":
-		x.Tables = value.Message().Interface().(*ModuleSchemaRecord_TableRecord)
+		lv := value.List()
+		clv := lv.(*_ModuleSchemaRecord_FileRecord_3_list)
+		x.Tables = *clv.list
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord"))
@@ -769,9 +825,10 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Mutable(fd protoreflect.F
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.tables":
 		if x.Tables == nil {
-			x.Tables = new(ModuleSchemaRecord_TableRecord)
+			x.Tables = []*ModuleSchemaRecord_TableRecord{}
 		}
-		return protoreflect.ValueOfMessage(x.Tables.ProtoReflect())
+		value := &_ModuleSchemaRecord_FileRecord_3_list{list: &x.Tables}
+		return protoreflect.ValueOfList(value)
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.id":
 		panic(fmt.Errorf("field id of message cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord is not mutable"))
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_path":
@@ -794,8 +851,8 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) NewField(fd protoreflect.
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_path":
 		return protoreflect.ValueOfString("")
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.tables":
-		m := new(ModuleSchemaRecord_TableRecord)
-		return protoreflect.ValueOfMessage(m.ProtoReflect())
+		list := []*ModuleSchemaRecord_TableRecord{}
+		return protoreflect.ValueOfList(&_ModuleSchemaRecord_FileRecord_3_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord"))
@@ -872,9 +929,11 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) ProtoMethods() *protoifac
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		if x.Tables != nil {
-			l = options.Size(x.Tables)
-			n += 1 + l + runtime.Sov(uint64(l))
+		if len(x.Tables) > 0 {
+			for _, e := range x.Tables {
+				l = options.Size(e)
+				n += 1 + l + runtime.Sov(uint64(l))
+			}
 		}
 		if x.unknownFields != nil {
 			n += len(x.unknownFields)
@@ -905,19 +964,21 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) ProtoMethods() *protoifac
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		if x.Tables != nil {
-			encoded, err := options.Marshal(x.Tables)
-			if err != nil {
-				return protoiface.MarshalOutput{
-					NoUnkeyedLiterals: input.NoUnkeyedLiterals,
-					Buf:               input.Buf,
-				}, err
+		if len(x.Tables) > 0 {
+			for iNdEx := len(x.Tables) - 1; iNdEx >= 0; iNdEx-- {
+				encoded, err := options.Marshal(x.Tables[iNdEx])
+				if err != nil {
+					return protoiface.MarshalOutput{
+						NoUnkeyedLiterals: input.NoUnkeyedLiterals,
+						Buf:               input.Buf,
+					}, err
+				}
+				i -= len(encoded)
+				copy(dAtA[i:], encoded)
+				i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
+				i--
+				dAtA[i] = 0x1a
 			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
-			i--
-			dAtA[i] = 0x1a
 		}
 		if len(x.ProtoFilePath) > 0 {
 			i -= len(x.ProtoFilePath)
@@ -1060,10 +1121,8 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) ProtoMethods() *protoifac
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				if x.Tables == nil {
-					x.Tables = &ModuleSchemaRecord_TableRecord{}
-				}
-				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Tables); err != nil {
+				x.Tables = append(x.Tables, &ModuleSchemaRecord_TableRecord{})
+				if err := options.Unmarshal(dAtA[iNdEx:postIndex], x.Tables[len(x.Tables)-1]); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
@@ -1853,9 +1912,9 @@ type ModuleSchemaRecord_FileRecord struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id            uint32                          `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProtoFilePath string                          `protobuf:"bytes,2,opt,name=proto_file_path,json=protoFilePath,proto3" json:"proto_file_path,omitempty"`
-	Tables        *ModuleSchemaRecord_TableRecord `protobuf:"bytes,3,opt,name=tables,proto3" json:"tables,omitempty"`
+	Id            uint32                            `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProtoFilePath string                            `protobuf:"bytes,2,opt,name=proto_file_path,json=protoFilePath,proto3" json:"proto_file_path,omitempty"`
+	Tables        []*ModuleSchemaRecord_TableRecord `protobuf:"bytes,3,rep,name=tables,proto3" json:"tables,omitempty"`
 }
 
 func (x *ModuleSchemaRecord_FileRecord) Reset() {
@@ -1892,7 +1951,7 @@ func (x *ModuleSchemaRecord_FileRecord) GetProtoFilePath() string {
 	return ""
 }
 
-func (x *ModuleSchemaRecord_FileRecord) GetTables() *ModuleSchemaRecord_TableRecord {
+func (x *ModuleSchemaRecord_FileRecord) GetTables() []*ModuleSchemaRecord_TableRecord {
 	if x != nil {
 		return x.Tables
 	}
@@ -2005,7 +2064,7 @@ var file_cosmos_orm_v1alpha1_internal_proto_rawDesc = []byte{
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x5f, 0x66, 0x69, 0x6c, 0x65, 0x5f, 0x70, 0x61, 0x74, 0x68, 0x18,
 	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x46, 0x69, 0x6c, 0x65,
 	0x50, 0x61, 0x74, 0x68, 0x12, 0x4b, 0x0a, 0x06, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x73, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x33, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x6f, 0x72,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x33, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x6f, 0x72,
 	0x6d, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x4d, 0x6f, 0x64, 0x75, 0x6c,
 	0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x2e, 0x54, 0x61,
 	0x62, 0x6c, 0x65, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x52, 0x06, 0x74, 0x61, 0x62, 0x6c, 0x65,

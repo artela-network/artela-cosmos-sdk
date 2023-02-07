@@ -10,16 +10,27 @@ import (
 	ormv1 "cosmossdk.io/api/cosmos/orm/v1"
 	ormv1alpha1 "cosmossdk.io/api/cosmos/orm/v1alpha1"
 	"github.com/cosmos/cosmos-sdk/orm/internal/fieldnames"
+	"github.com/cosmos/cosmos-sdk/orm/model/ormlist"
 )
 
-func (t *tableImpl) MigrateFrom(ctx context.Context, record *ormv1alpha1.ModuleSchemaRecord_TableRecord) (*ormv1alpha1.ModuleSchemaRecord_TableRecord, error) {
+func (t *tableImpl) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord_TableRecord) (*ormv1alpha1.ModuleSchemaRecord_TableRecord, error) {
 	msgName := string(t.MessageType().Descriptor().FullName())
-	if msgName != record.ProtoMsgName {
-		return nil, fmt.Errorf("cannot migrate from %s to %s", record.ProtoMsgName, msgName)
+	newTableDesc := t.tableDesc
+	newSchema := &ormv1alpha1.ModuleSchemaRecord_TableRecord{
+		Id:           t.tableId,
+		ProtoMsgName: msgName,
+		Desc:         &ormv1alpha1.ModuleSchemaRecord_TableRecord_Table{Table: newTableDesc},
+	}
+	if oldSchema == nil {
+		return newSchema, nil
+	}
+
+	if msgName != oldSchema.ProtoMsgName {
+		return nil, fmt.Errorf("cannot migrate from %s to %s", oldSchema.ProtoMsgName, msgName)
 	}
 
 	var oldTableDesc *ormv1.TableDescriptor
-	switch desc := record.Desc.(type) {
+	switch desc := oldSchema.Desc.(type) {
 	case *ormv1alpha1.ModuleSchemaRecord_TableRecord_Singleton:
 		return nil, fmt.Errorf("cannot migrate from a singleton to a table for %s", msgName)
 	case *ormv1alpha1.ModuleSchemaRecord_TableRecord_Table:
@@ -27,8 +38,6 @@ func (t *tableImpl) MigrateFrom(ctx context.Context, record *ormv1alpha1.ModuleS
 	default:
 		return nil, fmt.Errorf("unexpected case")
 	}
-
-	newTableDesc := t.tableDesc
 
 	//
 	// check primary key
@@ -47,6 +56,7 @@ func (t *tableImpl) MigrateFrom(ctx context.Context, record *ormv1alpha1.ModuleS
 	//
 	oldIndexes := indexesMap(oldTableDesc.Index)
 	newIndexes := indexesMap(newTableDesc.Index)
+
 	oldIndexIds := maps.Keys(oldIndexes)
 	slices.Sort(oldIndexIds)
 	for _, id := range oldIndexIds {
@@ -88,19 +98,19 @@ func (t *tableImpl) MigrateFrom(ctx context.Context, record *ormv1alpha1.ModuleS
 
 		idx := t.indexesById[id].(concreteIndex)
 
-		it, err := t.List(ctx, nil)
-		if err != nil {
-			return nil, err
-		}
-
 		backend, err := t.getWriteBackend(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		batch := newBatchIndexCommitmentWriter(backend)
-		idxStore := batch.IndexStore()
+		var lastCursor ormlist.CursorT
 		for {
+			// we read and insert one record at a time in order to not run out of memory
+			it, err := t.List(ctx, nil, ormlist.Cursor(lastCursor))
+			if err != nil {
+				return nil, err
+			}
+
 			if !it.Next() {
 				break
 			}
@@ -115,35 +125,40 @@ func (t *tableImpl) MigrateFrom(ctx context.Context, record *ormv1alpha1.ModuleS
 				return nil, err
 			}
 
-			err = idxStore.Set(k, v)
+			lastCursor = it.Cursor()
+			it.Close()
+
+			err = backend.IndexStore().Set(k, v)
 			if err != nil {
 				return nil, err
 			}
 		}
-		it.Close()
-
-		err = batch.Write()
-		if err != nil {
-			return nil, err
-		}
 	}
 
-	return &ormv1alpha1.ModuleSchemaRecord_TableRecord{
-		Id:           t.tableId,
-		ProtoMsgName: msgName,
-		Desc:         &ormv1alpha1.ModuleSchemaRecord_TableRecord_Table{Table: newTableDesc},
-	}, nil
+	return newSchema, nil
 }
 
-func (t *singleton) MigrateFrom(ctx context.Context, record *ormv1alpha1.ModuleSchemaRecord_TableRecord) (*ormv1alpha1.ModuleSchemaRecord_TableRecord, error) {
+func (t *singleton) MigrateFrom(_ context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord_TableRecord) (*ormv1alpha1.ModuleSchemaRecord_TableRecord, error) {
 	msgName := string(t.MessageType().Descriptor().FullName())
-	if msgName != record.ProtoMsgName {
-		return nil, fmt.Errorf("cannot migrate from %s to %s", record.ProtoMsgName, msgName)
+	newSchema := &ormv1alpha1.ModuleSchemaRecord_TableRecord{
+		Id:           t.tableId,
+		ProtoMsgName: msgName,
+		Desc: &ormv1alpha1.ModuleSchemaRecord_TableRecord_Singleton{
+			Singleton: &ormv1.SingletonDescriptor{Id: t.tableId},
+		},
 	}
 
-	switch record.Desc.(type) {
+	if oldSchema == nil {
+		return newSchema, nil
+	}
+
+	if msgName != oldSchema.ProtoMsgName {
+		return nil, fmt.Errorf("cannot migrate from %s to %s", oldSchema.ProtoMsgName, msgName)
+	}
+
+	switch oldSchema.Desc.(type) {
 	case *ormv1alpha1.ModuleSchemaRecord_TableRecord_Singleton:
-		return record, nil
+		return newSchema, nil
 	case *ormv1alpha1.ModuleSchemaRecord_TableRecord_Table:
 		return nil, fmt.Errorf("cannot migrate from a table to a singleton for %s", msgName)
 	default:

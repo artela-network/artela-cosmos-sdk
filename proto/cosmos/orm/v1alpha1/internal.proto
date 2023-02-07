@@ -11,7 +11,7 @@ message ModuleSchemaRecord {
   message FileRecord {
     uint32 id = 1;
     string proto_file_path = 2;
-    TableRecord tables = 3;
+    repeated TableRecord tables = 3;
   }
 
   message TableRecord {

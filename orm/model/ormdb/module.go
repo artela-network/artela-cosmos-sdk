@@ -49,11 +49,11 @@ type ModuleDB interface {
 }
 
 type moduleDB struct {
-	prefix       []byte
-	filesById    map[uint32]*fileDescriptorDB
-	tablesByName map[protoreflect.FullName]ormtable.Table
-	schemaCodec  *ormkv.SchemaCodec
-	schemaRecord *ormv1alpha1.ModuleSchemaRecord
+	prefix         []byte
+	filesById      map[uint32]*fileDescriptorDB
+	tablesByName   map[protoreflect.FullName]ormtable.Table
+	schemaCodec    *ormkv.SchemaCodec
+	kvStoreService store.KVStoreService
 }
 
 // ModuleDBOptions are options for constructing a ModuleDB.
@@ -87,13 +87,11 @@ type ModuleDBOptions struct {
 func NewModuleDB(schema *ormv1alpha1.ModuleSchemaDescriptor, options ModuleDBOptions) (ModuleDB, error) {
 	prefix := schema.Prefix
 	db := &moduleDB{
-		prefix:       prefix,
-		filesById:    map[uint32]*fileDescriptorDB{},
-		tablesByName: map[protoreflect.FullName]ormtable.Table{},
-		schemaCodec:  ormkv.NewSchemaCodec(prefix),
-		schemaRecord: &ormv1alpha1.ModuleSchemaRecord{
-			Version: 0,
-		},
+		prefix:         prefix,
+		filesById:      map[uint32]*fileDescriptorDB{},
+		tablesByName:   map[protoreflect.FullName]ormtable.Table{},
+		schemaCodec:    ormkv.NewSchemaCodec(prefix),
+		kvStoreService: options.KVStoreService,
 	}
 
 	fileResolver := options.FileResolver
@@ -161,6 +159,7 @@ func NewModuleDB(schema *ormv1alpha1.ModuleSchemaDescriptor, options ModuleDBOpt
 		opts := fileDescriptorDBOptions{
 			ID:              id,
 			Prefix:          prefix,
+			StorageType:     entry.StorageType,
 			TypeResolver:    options.TypeResolver,
 			JSONValidator:   options.JSONValidator,
 			BackendResolver: backendResolver,

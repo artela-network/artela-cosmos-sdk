@@ -26,11 +26,13 @@ type fileDescriptorDBOptions struct {
 	TypeResolver    ormtable.TypeResolver
 	JSONValidator   func(proto.Message) error
 	BackendResolver ormtable.BackendResolver
+	StorageType     ormv1alpha1.StorageType
 }
 
 type fileDescriptorDB struct {
 	id             uint32
 	prefix         []byte
+	storageType    ormv1alpha1.StorageType
 	tablesById     map[uint32]ormtable.Table
 	tablesByName   map[protoreflect.FullName]ormtable.Table
 	fileDescriptor protoreflect.FileDescriptor
@@ -42,6 +44,7 @@ func newFileDescriptorDB(fileDescriptor protoreflect.FileDescriptor, options fil
 	db := &fileDescriptorDB{
 		id:             options.ID,
 		prefix:         prefix,
+		storageType:    options.StorageType,
 		tablesById:     map[uint32]ormtable.Table{},
 		tablesByName:   map[protoreflect.FullName]ormtable.Table{},
 		fileDescriptor: fileDescriptor,
