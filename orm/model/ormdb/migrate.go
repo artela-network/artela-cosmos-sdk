@@ -17,19 +17,14 @@ func (m moduleDB) AutoMigrate(ctx context.Context) error {
 
 func (m moduleDB) MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord) error {
 
-	return m.SaveSchema(ctx)
+	return m.saveSchema(ctx)
 }
 
-func (m moduleDB) SaveSchema(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
+func (m moduleDB) saveSchema(ctx context.Context) error {
+	return nil
 }
 
 func (m moduleDB) readSchema(ctx context.Context) (*ormv1alpha1.ModuleSchemaRecord, error) {
 	//TODO implement me
 	panic("implement me")
-}
-
-func (m moduleDB) makeSchema() *ormv1alpha1.ModuleSchemaRecord {
-	return nil
 }

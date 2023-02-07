@@ -79,7 +79,13 @@ func Build(options Options) (Table, error) {
 		backendResolver = getBackendDefault
 	}
 
+	tableDesc := options.TableDescriptor
+	if tableDesc == nil {
+		tableDesc = proto.GetExtension(messageDescriptor.Options(), ormv1.E_Table).(*ormv1.TableDescriptor)
+	}
+
 	table := &tableImpl{
+		tableDesc: tableDesc,
 		primaryKeyIndex: &primaryKeyIndex{
 			indexers:   []indexer{},
 			getBackend: backendResolver,
@@ -94,11 +100,6 @@ func Build(options Options) (Table, error) {
 	}
 
 	pkIndex := table.primaryKeyIndex
-
-	tableDesc := options.TableDescriptor
-	if tableDesc == nil {
-		tableDesc = proto.GetExtension(messageDescriptor.Options(), ormv1.E_Table).(*ormv1.TableDescriptor)
-	}
 
 	singletonDesc := options.SingletonDescriptor
 	if singletonDesc == nil {

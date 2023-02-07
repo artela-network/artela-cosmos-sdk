@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 
+	ormv1 "cosmossdk.io/api/cosmos/orm/v1"
 	"github.com/cosmos/cosmos-sdk/orm/internal/fieldnames"
 
 	"google.golang.org/protobuf/encoding/protojson"
@@ -21,6 +22,7 @@ import (
 // tableImpl implements Table.
 type tableImpl struct {
 	*primaryKeyIndex
+	tableDesc             *ormv1.TableDescriptor
 	indexes               []Index
 	indexesByFields       map[fieldnames.FieldNames]concreteIndex
 	uniqueIndexesByFields map[fieldnames.FieldNames]UniqueIndex

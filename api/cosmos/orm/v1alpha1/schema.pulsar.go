@@ -576,7 +576,7 @@ func (x *fastReflection_ModuleSchemaDescriptor) ProtoMethods() *protoiface.Metho
 var (
 	md_ModuleSchemaDescriptor_FileEntry                 protoreflect.MessageDescriptor
 	fd_ModuleSchemaDescriptor_FileEntry_id              protoreflect.FieldDescriptor
-	fd_ModuleSchemaDescriptor_FileEntry_proto_file_name protoreflect.FieldDescriptor
+	fd_ModuleSchemaDescriptor_FileEntry_proto_file_path protoreflect.FieldDescriptor
 	fd_ModuleSchemaDescriptor_FileEntry_storage_type    protoreflect.FieldDescriptor
 )
 
@@ -584,7 +584,7 @@ func init() {
 	file_cosmos_orm_v1alpha1_schema_proto_init()
 	md_ModuleSchemaDescriptor_FileEntry = File_cosmos_orm_v1alpha1_schema_proto.Messages().ByName("ModuleSchemaDescriptor").Messages().ByName("FileEntry")
 	fd_ModuleSchemaDescriptor_FileEntry_id = md_ModuleSchemaDescriptor_FileEntry.Fields().ByName("id")
-	fd_ModuleSchemaDescriptor_FileEntry_proto_file_name = md_ModuleSchemaDescriptor_FileEntry.Fields().ByName("proto_file_name")
+	fd_ModuleSchemaDescriptor_FileEntry_proto_file_path = md_ModuleSchemaDescriptor_FileEntry.Fields().ByName("proto_file_path")
 	fd_ModuleSchemaDescriptor_FileEntry_storage_type = md_ModuleSchemaDescriptor_FileEntry.Fields().ByName("storage_type")
 }
 
@@ -659,9 +659,9 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) Range(f func(protorefl
 			return
 		}
 	}
-	if x.ProtoFileName != "" {
-		value := protoreflect.ValueOfString(x.ProtoFileName)
-		if !f(fd_ModuleSchemaDescriptor_FileEntry_proto_file_name, value) {
+	if x.ProtoFilePath != "" {
+		value := protoreflect.ValueOfString(x.ProtoFilePath)
+		if !f(fd_ModuleSchemaDescriptor_FileEntry_proto_file_path, value) {
 			return
 		}
 	}
@@ -688,8 +688,8 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) Has(fd protoreflect.Fi
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.id":
 		return x.Id != uint32(0)
-	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_name":
-		return x.ProtoFileName != ""
+	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_path":
+		return x.ProtoFilePath != ""
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.storage_type":
 		return x.StorageType != 0
 	default:
@@ -710,8 +710,8 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) Clear(fd protoreflect.
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.id":
 		x.Id = uint32(0)
-	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_name":
-		x.ProtoFileName = ""
+	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_path":
+		x.ProtoFilePath = ""
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.storage_type":
 		x.StorageType = 0
 	default:
@@ -733,8 +733,8 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) Get(descriptor protore
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.id":
 		value := x.Id
 		return protoreflect.ValueOfUint32(value)
-	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_name":
-		value := x.ProtoFileName
+	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_path":
+		value := x.ProtoFilePath
 		return protoreflect.ValueOfString(value)
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.storage_type":
 		value := x.StorageType
@@ -761,8 +761,8 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) Set(fd protoreflect.Fi
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.id":
 		x.Id = uint32(value.Uint())
-	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_name":
-		x.ProtoFileName = value.Interface().(string)
+	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_path":
+		x.ProtoFilePath = value.Interface().(string)
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.storage_type":
 		x.StorageType = (StorageType)(value.Enum())
 	default:
@@ -787,8 +787,8 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) Mutable(fd protoreflec
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.id":
 		panic(fmt.Errorf("field id of message cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry is not mutable"))
-	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_name":
-		panic(fmt.Errorf("field proto_file_name of message cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry is not mutable"))
+	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_path":
+		panic(fmt.Errorf("field proto_file_path of message cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry is not mutable"))
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.storage_type":
 		panic(fmt.Errorf("field storage_type of message cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry is not mutable"))
 	default:
@@ -806,7 +806,7 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) NewField(fd protorefle
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.id":
 		return protoreflect.ValueOfUint32(uint32(0))
-	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_name":
+	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.proto_file_path":
 		return protoreflect.ValueOfString("")
 	case "cosmos.orm.v1alpha1.ModuleSchemaDescriptor.FileEntry.storage_type":
 		return protoreflect.ValueOfEnum(0)
@@ -882,7 +882,7 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) ProtoMethods() *protoi
 		if x.Id != 0 {
 			n += 1 + runtime.Sov(uint64(x.Id))
 		}
-		l = len(x.ProtoFileName)
+		l = len(x.ProtoFilePath)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
@@ -923,10 +923,10 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) ProtoMethods() *protoi
 			i--
 			dAtA[i] = 0x18
 		}
-		if len(x.ProtoFileName) > 0 {
-			i -= len(x.ProtoFileName)
-			copy(dAtA[i:], x.ProtoFileName)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ProtoFileName)))
+		if len(x.ProtoFilePath) > 0 {
+			i -= len(x.ProtoFilePath)
+			copy(dAtA[i:], x.ProtoFilePath)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ProtoFilePath)))
 			i--
 			dAtA[i] = 0x12
 		}
@@ -1005,7 +1005,7 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) ProtoMethods() *protoi
 				}
 			case 2:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ProtoFileName", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ProtoFilePath", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -1033,7 +1033,7 @@ func (x *fastReflection_ModuleSchemaDescriptor_FileEntry) ProtoMethods() *protoi
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.ProtoFileName = string(dAtA[iNdEx:postIndex])
+				x.ProtoFilePath = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 3:
 				if wireType != 0 {
@@ -1217,10 +1217,8 @@ type ModuleSchemaDescriptor_FileEntry struct {
 	// id is a prefix that will be varint encoded and prepended to all the
 	// table keys specified in the file's tables.
 	Id uint32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// proto_file_name is the name of a file .proto in that contains
-	// table definitions. The .proto file must be in a package that the
-	// module has referenced using cosmos.app.v1.ModuleDescriptor.use_package.
-	ProtoFileName string `protobuf:"bytes,2,opt,name=proto_file_name,json=protoFileName,proto3" json:"proto_file_name,omitempty"`
+	// proto_file_path is the path to a .proto file that contains table definitions.
+	ProtoFilePath string `protobuf:"bytes,2,opt,name=proto_file_path,json=protoFilePath,proto3" json:"proto_file_path,omitempty"`
 	// storage_type optionally indicates the type of storage this file's
 	// tables should used. If it is left unspecified, the default KV-storage
 	// of the app will be used.
@@ -1254,9 +1252,9 @@ func (x *ModuleSchemaDescriptor_FileEntry) GetId() uint32 {
 	return 0
 }
 
-func (x *ModuleSchemaDescriptor_FileEntry) GetProtoFileName() string {
+func (x *ModuleSchemaDescriptor_FileEntry) GetProtoFilePath() string {
 	if x != nil {
-		return x.ProtoFileName
+		return x.ProtoFilePath
 	}
 	return ""
 }
@@ -1310,8 +1308,8 @@ var file_cosmos_orm_v1alpha1_schema_proto_rawDesc = []byte{
 	0x65, 0x66, 0x69, 0x78, 0x1a, 0x88, 0x01, 0x0a, 0x09, 0x46, 0x69, 0x6c, 0x65, 0x45, 0x6e, 0x74,
 	0x72, 0x79, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02,
 	0x69, 0x64, 0x12, 0x26, 0x0a, 0x0f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x5f, 0x66, 0x69, 0x6c, 0x65,
-	0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x46, 0x69, 0x6c, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x43, 0x0a, 0x0c, 0x73, 0x74,
+	0x5f, 0x70, 0x61, 0x74, 0x68, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x46, 0x69, 0x6c, 0x65, 0x50, 0x61, 0x74, 0x68, 0x12, 0x43, 0x0a, 0x0c, 0x73, 0x74,
 	0x6f, 0x72, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e,
 	0x32, 0x20, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x6f, 0x72, 0x6d, 0x2e, 0x76, 0x31,
 	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x53, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x54, 0x79,

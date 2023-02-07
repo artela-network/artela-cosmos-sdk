@@ -10,15 +10,16 @@ message ModuleSchemaRecord {
 
   message FileRecord {
     uint32 id = 1;
-    string proto_file_name = 2;
+    string proto_file_path = 2;
     TableRecord tables = 3;
   }
 
   message TableRecord {
-    string proto_msg_name = 1;
-    oneof descriptor {
-      cosmos.orm.v1.TableDescriptor table = 2;
-      cosmos.orm.v1.SingletonDescriptor singleton = 3;
+    uint32 id = 1;
+    string proto_msg_name = 2;
+    oneof desc {
+      cosmos.orm.v1.TableDescriptor table = 3;
+      cosmos.orm.v1.SingletonDescriptor singleton = 4;
     }
   }
 }

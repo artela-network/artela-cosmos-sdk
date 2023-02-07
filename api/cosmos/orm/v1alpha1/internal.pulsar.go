@@ -558,7 +558,7 @@ func (x *fastReflection_ModuleSchemaRecord) ProtoMethods() *protoiface.Methods {
 var (
 	md_ModuleSchemaRecord_FileRecord                 protoreflect.MessageDescriptor
 	fd_ModuleSchemaRecord_FileRecord_id              protoreflect.FieldDescriptor
-	fd_ModuleSchemaRecord_FileRecord_proto_file_name protoreflect.FieldDescriptor
+	fd_ModuleSchemaRecord_FileRecord_proto_file_path protoreflect.FieldDescriptor
 	fd_ModuleSchemaRecord_FileRecord_tables          protoreflect.FieldDescriptor
 )
 
@@ -566,7 +566,7 @@ func init() {
 	file_cosmos_orm_v1alpha1_internal_proto_init()
 	md_ModuleSchemaRecord_FileRecord = File_cosmos_orm_v1alpha1_internal_proto.Messages().ByName("ModuleSchemaRecord").Messages().ByName("FileRecord")
 	fd_ModuleSchemaRecord_FileRecord_id = md_ModuleSchemaRecord_FileRecord.Fields().ByName("id")
-	fd_ModuleSchemaRecord_FileRecord_proto_file_name = md_ModuleSchemaRecord_FileRecord.Fields().ByName("proto_file_name")
+	fd_ModuleSchemaRecord_FileRecord_proto_file_path = md_ModuleSchemaRecord_FileRecord.Fields().ByName("proto_file_path")
 	fd_ModuleSchemaRecord_FileRecord_tables = md_ModuleSchemaRecord_FileRecord.Fields().ByName("tables")
 }
 
@@ -641,9 +641,9 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Range(f func(protoreflect
 			return
 		}
 	}
-	if x.ProtoFileName != "" {
-		value := protoreflect.ValueOfString(x.ProtoFileName)
-		if !f(fd_ModuleSchemaRecord_FileRecord_proto_file_name, value) {
+	if x.ProtoFilePath != "" {
+		value := protoreflect.ValueOfString(x.ProtoFilePath)
+		if !f(fd_ModuleSchemaRecord_FileRecord_proto_file_path, value) {
 			return
 		}
 	}
@@ -670,8 +670,8 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Has(fd protoreflect.Field
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.id":
 		return x.Id != uint32(0)
-	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_name":
-		return x.ProtoFileName != ""
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_path":
+		return x.ProtoFilePath != ""
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.tables":
 		return x.Tables != nil
 	default:
@@ -692,8 +692,8 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Clear(fd protoreflect.Fie
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.id":
 		x.Id = uint32(0)
-	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_name":
-		x.ProtoFileName = ""
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_path":
+		x.ProtoFilePath = ""
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.tables":
 		x.Tables = nil
 	default:
@@ -715,8 +715,8 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Get(descriptor protorefle
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.id":
 		value := x.Id
 		return protoreflect.ValueOfUint32(value)
-	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_name":
-		value := x.ProtoFileName
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_path":
+		value := x.ProtoFilePath
 		return protoreflect.ValueOfString(value)
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.tables":
 		value := x.Tables
@@ -743,8 +743,8 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Set(fd protoreflect.Field
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.id":
 		x.Id = uint32(value.Uint())
-	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_name":
-		x.ProtoFileName = value.Interface().(string)
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_path":
+		x.ProtoFilePath = value.Interface().(string)
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.tables":
 		x.Tables = value.Message().Interface().(*ModuleSchemaRecord_TableRecord)
 	default:
@@ -774,8 +774,8 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) Mutable(fd protoreflect.F
 		return protoreflect.ValueOfMessage(x.Tables.ProtoReflect())
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.id":
 		panic(fmt.Errorf("field id of message cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord is not mutable"))
-	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_name":
-		panic(fmt.Errorf("field proto_file_name of message cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord is not mutable"))
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_path":
+		panic(fmt.Errorf("field proto_file_path of message cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord is not mutable"))
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord"))
@@ -791,7 +791,7 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) NewField(fd protoreflect.
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.id":
 		return protoreflect.ValueOfUint32(uint32(0))
-	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_name":
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.proto_file_path":
 		return protoreflect.ValueOfString("")
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.FileRecord.tables":
 		m := new(ModuleSchemaRecord_TableRecord)
@@ -868,7 +868,7 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) ProtoMethods() *protoifac
 		if x.Id != 0 {
 			n += 1 + runtime.Sov(uint64(x.Id))
 		}
-		l = len(x.ProtoFileName)
+		l = len(x.ProtoFilePath)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
@@ -919,10 +919,10 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) ProtoMethods() *protoifac
 			i--
 			dAtA[i] = 0x1a
 		}
-		if len(x.ProtoFileName) > 0 {
-			i -= len(x.ProtoFileName)
-			copy(dAtA[i:], x.ProtoFileName)
-			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ProtoFileName)))
+		if len(x.ProtoFilePath) > 0 {
+			i -= len(x.ProtoFilePath)
+			copy(dAtA[i:], x.ProtoFilePath)
+			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ProtoFilePath)))
 			i--
 			dAtA[i] = 0x12
 		}
@@ -1001,7 +1001,7 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) ProtoMethods() *protoifac
 				}
 			case 2:
 				if wireType != 2 {
-					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ProtoFileName", wireType)
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ProtoFilePath", wireType)
 				}
 				var stringLen uint64
 				for shift := uint(0); ; shift += 7 {
@@ -1029,7 +1029,7 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) ProtoMethods() *protoifac
 				if postIndex > l {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
 				}
-				x.ProtoFileName = string(dAtA[iNdEx:postIndex])
+				x.ProtoFilePath = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
 			case 3:
 				if wireType != 2 {
@@ -1104,6 +1104,7 @@ func (x *fastReflection_ModuleSchemaRecord_FileRecord) ProtoMethods() *protoifac
 
 var (
 	md_ModuleSchemaRecord_TableRecord                protoreflect.MessageDescriptor
+	fd_ModuleSchemaRecord_TableRecord_id             protoreflect.FieldDescriptor
 	fd_ModuleSchemaRecord_TableRecord_proto_msg_name protoreflect.FieldDescriptor
 	fd_ModuleSchemaRecord_TableRecord_table          protoreflect.FieldDescriptor
 	fd_ModuleSchemaRecord_TableRecord_singleton      protoreflect.FieldDescriptor
@@ -1112,6 +1113,7 @@ var (
 func init() {
 	file_cosmos_orm_v1alpha1_internal_proto_init()
 	md_ModuleSchemaRecord_TableRecord = File_cosmos_orm_v1alpha1_internal_proto.Messages().ByName("ModuleSchemaRecord").Messages().ByName("TableRecord")
+	fd_ModuleSchemaRecord_TableRecord_id = md_ModuleSchemaRecord_TableRecord.Fields().ByName("id")
 	fd_ModuleSchemaRecord_TableRecord_proto_msg_name = md_ModuleSchemaRecord_TableRecord.Fields().ByName("proto_msg_name")
 	fd_ModuleSchemaRecord_TableRecord_table = md_ModuleSchemaRecord_TableRecord.Fields().ByName("table")
 	fd_ModuleSchemaRecord_TableRecord_singleton = md_ModuleSchemaRecord_TableRecord.Fields().ByName("singleton")
@@ -1182,14 +1184,20 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) Interface() protoreflect
 // While iterating, mutating operations may only be performed
 // on the current field descriptor.
 func (x *fastReflection_ModuleSchemaRecord_TableRecord) Range(f func(protoreflect.FieldDescriptor, protoreflect.Value) bool) {
+	if x.Id != uint32(0) {
+		value := protoreflect.ValueOfUint32(x.Id)
+		if !f(fd_ModuleSchemaRecord_TableRecord_id, value) {
+			return
+		}
+	}
 	if x.ProtoMsgName != "" {
 		value := protoreflect.ValueOfString(x.ProtoMsgName)
 		if !f(fd_ModuleSchemaRecord_TableRecord_proto_msg_name, value) {
 			return
 		}
 	}
-	if x.Descriptor_ != nil {
-		switch o := x.Descriptor_.(type) {
+	if x.Desc != nil {
+		switch o := x.Desc.(type) {
 		case *ModuleSchemaRecord_TableRecord_Table:
 			v := o.Table
 			value := protoreflect.ValueOfMessage(v.ProtoReflect())
@@ -1219,20 +1227,22 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) Range(f func(protoreflec
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_ModuleSchemaRecord_TableRecord) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.id":
+		return x.Id != uint32(0)
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.proto_msg_name":
 		return x.ProtoMsgName != ""
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.table":
-		if x.Descriptor_ == nil {
+		if x.Desc == nil {
 			return false
-		} else if _, ok := x.Descriptor_.(*ModuleSchemaRecord_TableRecord_Table); ok {
+		} else if _, ok := x.Desc.(*ModuleSchemaRecord_TableRecord_Table); ok {
 			return true
 		} else {
 			return false
 		}
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.singleton":
-		if x.Descriptor_ == nil {
+		if x.Desc == nil {
 			return false
-		} else if _, ok := x.Descriptor_.(*ModuleSchemaRecord_TableRecord_Singleton); ok {
+		} else if _, ok := x.Desc.(*ModuleSchemaRecord_TableRecord_Singleton); ok {
 			return true
 		} else {
 			return false
@@ -1253,12 +1263,14 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) Has(fd protoreflect.Fiel
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_ModuleSchemaRecord_TableRecord) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.id":
+		x.Id = uint32(0)
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.proto_msg_name":
 		x.ProtoMsgName = ""
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.table":
-		x.Descriptor_ = nil
+		x.Desc = nil
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.singleton":
-		x.Descriptor_ = nil
+		x.Desc = nil
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord"))
@@ -1275,21 +1287,24 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) Clear(fd protoreflect.Fi
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_ModuleSchemaRecord_TableRecord) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.id":
+		value := x.Id
+		return protoreflect.ValueOfUint32(value)
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.proto_msg_name":
 		value := x.ProtoMsgName
 		return protoreflect.ValueOfString(value)
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.table":
-		if x.Descriptor_ == nil {
+		if x.Desc == nil {
 			return protoreflect.ValueOfMessage((*v1.TableDescriptor)(nil).ProtoReflect())
-		} else if v, ok := x.Descriptor_.(*ModuleSchemaRecord_TableRecord_Table); ok {
+		} else if v, ok := x.Desc.(*ModuleSchemaRecord_TableRecord_Table); ok {
 			return protoreflect.ValueOfMessage(v.Table.ProtoReflect())
 		} else {
 			return protoreflect.ValueOfMessage((*v1.TableDescriptor)(nil).ProtoReflect())
 		}
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.singleton":
-		if x.Descriptor_ == nil {
+		if x.Desc == nil {
 			return protoreflect.ValueOfMessage((*v1.SingletonDescriptor)(nil).ProtoReflect())
-		} else if v, ok := x.Descriptor_.(*ModuleSchemaRecord_TableRecord_Singleton); ok {
+		} else if v, ok := x.Desc.(*ModuleSchemaRecord_TableRecord_Singleton); ok {
 			return protoreflect.ValueOfMessage(v.Singleton.ProtoReflect())
 		} else {
 			return protoreflect.ValueOfMessage((*v1.SingletonDescriptor)(nil).ProtoReflect())
@@ -1314,14 +1329,16 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) Get(descriptor protorefl
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_ModuleSchemaRecord_TableRecord) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.id":
+		x.Id = uint32(value.Uint())
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.proto_msg_name":
 		x.ProtoMsgName = value.Interface().(string)
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.table":
 		cv := value.Message().Interface().(*v1.TableDescriptor)
-		x.Descriptor_ = &ModuleSchemaRecord_TableRecord_Table{Table: cv}
+		x.Desc = &ModuleSchemaRecord_TableRecord_Table{Table: cv}
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.singleton":
 		cv := value.Message().Interface().(*v1.SingletonDescriptor)
-		x.Descriptor_ = &ModuleSchemaRecord_TableRecord_Singleton{Singleton: cv}
+		x.Desc = &ModuleSchemaRecord_TableRecord_Singleton{Singleton: cv}
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord"))
@@ -1343,37 +1360,39 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) Set(fd protoreflect.Fiel
 func (x *fastReflection_ModuleSchemaRecord_TableRecord) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.table":
-		if x.Descriptor_ == nil {
+		if x.Desc == nil {
 			value := &v1.TableDescriptor{}
 			oneofValue := &ModuleSchemaRecord_TableRecord_Table{Table: value}
-			x.Descriptor_ = oneofValue
+			x.Desc = oneofValue
 			return protoreflect.ValueOfMessage(value.ProtoReflect())
 		}
-		switch m := x.Descriptor_.(type) {
+		switch m := x.Desc.(type) {
 		case *ModuleSchemaRecord_TableRecord_Table:
 			return protoreflect.ValueOfMessage(m.Table.ProtoReflect())
 		default:
 			value := &v1.TableDescriptor{}
 			oneofValue := &ModuleSchemaRecord_TableRecord_Table{Table: value}
-			x.Descriptor_ = oneofValue
+			x.Desc = oneofValue
 			return protoreflect.ValueOfMessage(value.ProtoReflect())
 		}
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.singleton":
-		if x.Descriptor_ == nil {
+		if x.Desc == nil {
 			value := &v1.SingletonDescriptor{}
 			oneofValue := &ModuleSchemaRecord_TableRecord_Singleton{Singleton: value}
-			x.Descriptor_ = oneofValue
+			x.Desc = oneofValue
 			return protoreflect.ValueOfMessage(value.ProtoReflect())
 		}
-		switch m := x.Descriptor_.(type) {
+		switch m := x.Desc.(type) {
 		case *ModuleSchemaRecord_TableRecord_Singleton:
 			return protoreflect.ValueOfMessage(m.Singleton.ProtoReflect())
 		default:
 			value := &v1.SingletonDescriptor{}
 			oneofValue := &ModuleSchemaRecord_TableRecord_Singleton{Singleton: value}
-			x.Descriptor_ = oneofValue
+			x.Desc = oneofValue
 			return protoreflect.ValueOfMessage(value.ProtoReflect())
 		}
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.id":
+		panic(fmt.Errorf("field id of message cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord is not mutable"))
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.proto_msg_name":
 		panic(fmt.Errorf("field proto_msg_name of message cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord is not mutable"))
 	default:
@@ -1389,6 +1408,8 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) Mutable(fd protoreflect.
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_ModuleSchemaRecord_TableRecord) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.id":
+		return protoreflect.ValueOfUint32(uint32(0))
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.proto_msg_name":
 		return protoreflect.ValueOfString("")
 	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.table":
@@ -1410,11 +1431,11 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) NewField(fd protoreflect
 // It panics if the oneof descriptor does not belong to this message.
 func (x *fastReflection_ModuleSchemaRecord_TableRecord) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
-	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.descriptor":
-		if x.Descriptor_ == nil {
+	case "cosmos.orm.v1alpha1.ModuleSchemaRecord.TableRecord.desc":
+		if x.Desc == nil {
 			return nil
 		}
-		switch x.Descriptor_.(type) {
+		switch x.Desc.(type) {
 		case *ModuleSchemaRecord_TableRecord_Table:
 			return x.Descriptor().Fields().ByName("table")
 		case *ModuleSchemaRecord_TableRecord_Singleton:
@@ -1476,11 +1497,14 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) ProtoMethods() *protoifa
 		var n int
 		var l int
 		_ = l
+		if x.Id != 0 {
+			n += 1 + runtime.Sov(uint64(x.Id))
+		}
 		l = len(x.ProtoMsgName)
 		if l > 0 {
 			n += 1 + l + runtime.Sov(uint64(l))
 		}
-		switch x := x.Descriptor_.(type) {
+		switch x := x.Desc.(type) {
 		case *ModuleSchemaRecord_TableRecord_Table:
 			if x == nil {
 				break
@@ -1523,7 +1547,7 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) ProtoMethods() *protoifa
 			i -= len(x.unknownFields)
 			copy(dAtA[i:], x.unknownFields)
 		}
-		switch x := x.Descriptor_.(type) {
+		switch x := x.Desc.(type) {
 		case *ModuleSchemaRecord_TableRecord_Table:
 			encoded, err := options.Marshal(x.Table)
 			if err != nil {
@@ -1536,7 +1560,7 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) ProtoMethods() *protoifa
 			copy(dAtA[i:], encoded)
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 			i--
-			dAtA[i] = 0x12
+			dAtA[i] = 0x1a
 		case *ModuleSchemaRecord_TableRecord_Singleton:
 			encoded, err := options.Marshal(x.Singleton)
 			if err != nil {
@@ -1549,14 +1573,19 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) ProtoMethods() *protoifa
 			copy(dAtA[i:], encoded)
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x22
 		}
 		if len(x.ProtoMsgName) > 0 {
 			i -= len(x.ProtoMsgName)
 			copy(dAtA[i:], x.ProtoMsgName)
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(x.ProtoMsgName)))
 			i--
-			dAtA[i] = 0xa
+			dAtA[i] = 0x12
+		}
+		if x.Id != 0 {
+			i = runtime.EncodeVarint(dAtA, i, uint64(x.Id))
+			i--
+			dAtA[i] = 0x8
 		}
 		if input.Buf != nil {
 			input.Buf = append(input.Buf, dAtA...)
@@ -1608,6 +1637,25 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) ProtoMethods() *protoifa
 			}
 			switch fieldNum {
 			case 1:
+				if wireType != 0 {
+					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+				}
+				x.Id = 0
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, runtime.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					x.Id |= uint32(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+			case 2:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field ProtoMsgName", wireType)
 				}
@@ -1639,7 +1687,7 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) ProtoMethods() *protoifa
 				}
 				x.ProtoMsgName = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
-			case 2:
+			case 3:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Table", wireType)
 				}
@@ -1672,9 +1720,9 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) ProtoMethods() *protoifa
 				if err := options.Unmarshal(dAtA[iNdEx:postIndex], v); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
-				x.Descriptor_ = &ModuleSchemaRecord_TableRecord_Table{v}
+				x.Desc = &ModuleSchemaRecord_TableRecord_Table{v}
 				iNdEx = postIndex
-			case 3:
+			case 4:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Singleton", wireType)
 				}
@@ -1707,7 +1755,7 @@ func (x *fastReflection_ModuleSchemaRecord_TableRecord) ProtoMethods() *protoifa
 				if err := options.Unmarshal(dAtA[iNdEx:postIndex], v); err != nil {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
-				x.Descriptor_ = &ModuleSchemaRecord_TableRecord_Singleton{v}
+				x.Desc = &ModuleSchemaRecord_TableRecord_Singleton{v}
 				iNdEx = postIndex
 			default:
 				iNdEx = preIndex
@@ -1806,7 +1854,7 @@ type ModuleSchemaRecord_FileRecord struct {
 	unknownFields protoimpl.UnknownFields
 
 	Id            uint32                          `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProtoFileName string                          `protobuf:"bytes,2,opt,name=proto_file_name,json=protoFileName,proto3" json:"proto_file_name,omitempty"`
+	ProtoFilePath string                          `protobuf:"bytes,2,opt,name=proto_file_path,json=protoFilePath,proto3" json:"proto_file_path,omitempty"`
 	Tables        *ModuleSchemaRecord_TableRecord `protobuf:"bytes,3,opt,name=tables,proto3" json:"tables,omitempty"`
 }
 
@@ -1837,9 +1885,9 @@ func (x *ModuleSchemaRecord_FileRecord) GetId() uint32 {
 	return 0
 }
 
-func (x *ModuleSchemaRecord_FileRecord) GetProtoFileName() string {
+func (x *ModuleSchemaRecord_FileRecord) GetProtoFilePath() string {
 	if x != nil {
-		return x.ProtoFileName
+		return x.ProtoFilePath
 	}
 	return ""
 }
@@ -1856,12 +1904,13 @@ type ModuleSchemaRecord_TableRecord struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ProtoMsgName string `protobuf:"bytes,1,opt,name=proto_msg_name,json=protoMsgName,proto3" json:"proto_msg_name,omitempty"`
-	// Types that are assignable to Descriptor_:
+	Id           uint32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ProtoMsgName string `protobuf:"bytes,2,opt,name=proto_msg_name,json=protoMsgName,proto3" json:"proto_msg_name,omitempty"`
+	// Types that are assignable to Desc:
 	//
 	//	*ModuleSchemaRecord_TableRecord_Table
 	//	*ModuleSchemaRecord_TableRecord_Singleton
-	Descriptor_ isModuleSchemaRecord_TableRecord_Descriptor_ `protobuf_oneof:"descriptor"`
+	Desc isModuleSchemaRecord_TableRecord_Desc `protobuf_oneof:"desc"`
 }
 
 func (x *ModuleSchemaRecord_TableRecord) Reset() {
@@ -1884,6 +1933,13 @@ func (*ModuleSchemaRecord_TableRecord) Descriptor() ([]byte, []int) {
 	return file_cosmos_orm_v1alpha1_internal_proto_rawDescGZIP(), []int{0, 1}
 }
 
+func (x *ModuleSchemaRecord_TableRecord) GetId() uint32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
 func (x *ModuleSchemaRecord_TableRecord) GetProtoMsgName() string {
 	if x != nil {
 		return x.ProtoMsgName
@@ -1891,42 +1947,42 @@ func (x *ModuleSchemaRecord_TableRecord) GetProtoMsgName() string {
 	return ""
 }
 
-func (x *ModuleSchemaRecord_TableRecord) GetDescriptor_() isModuleSchemaRecord_TableRecord_Descriptor_ {
+func (x *ModuleSchemaRecord_TableRecord) GetDesc() isModuleSchemaRecord_TableRecord_Desc {
 	if x != nil {
-		return x.Descriptor_
+		return x.Desc
 	}
 	return nil
 }
 
 func (x *ModuleSchemaRecord_TableRecord) GetTable() *v1.TableDescriptor {
-	if x, ok := x.GetDescriptor_().(*ModuleSchemaRecord_TableRecord_Table); ok {
+	if x, ok := x.GetDesc().(*ModuleSchemaRecord_TableRecord_Table); ok {
 		return x.Table
 	}
 	return nil
 }
 
 func (x *ModuleSchemaRecord_TableRecord) GetSingleton() *v1.SingletonDescriptor {
-	if x, ok := x.GetDescriptor_().(*ModuleSchemaRecord_TableRecord_Singleton); ok {
+	if x, ok := x.GetDesc().(*ModuleSchemaRecord_TableRecord_Singleton); ok {
 		return x.Singleton
 	}
 	return nil
 }
 
-type isModuleSchemaRecord_TableRecord_Descriptor_ interface {
-	isModuleSchemaRecord_TableRecord_Descriptor_()
+type isModuleSchemaRecord_TableRecord_Desc interface {
+	isModuleSchemaRecord_TableRecord_Desc()
 }
 
 type ModuleSchemaRecord_TableRecord_Table struct {
-	Table *v1.TableDescriptor `protobuf:"bytes,2,opt,name=table,proto3,oneof"`
+	Table *v1.TableDescriptor `protobuf:"bytes,3,opt,name=table,proto3,oneof"`
 }
 
 type ModuleSchemaRecord_TableRecord_Singleton struct {
-	Singleton *v1.SingletonDescriptor `protobuf:"bytes,3,opt,name=singleton,proto3,oneof"`
+	Singleton *v1.SingletonDescriptor `protobuf:"bytes,4,opt,name=singleton,proto3,oneof"`
 }
 
-func (*ModuleSchemaRecord_TableRecord_Table) isModuleSchemaRecord_TableRecord_Descriptor_() {}
+func (*ModuleSchemaRecord_TableRecord_Table) isModuleSchemaRecord_TableRecord_Desc() {}
 
-func (*ModuleSchemaRecord_TableRecord_Singleton) isModuleSchemaRecord_TableRecord_Descriptor_() {}
+func (*ModuleSchemaRecord_TableRecord_Singleton) isModuleSchemaRecord_TableRecord_Desc() {}
 
 var File_cosmos_orm_v1alpha1_internal_proto protoreflect.FileDescriptor
 
@@ -1936,7 +1992,7 @@ var file_cosmos_orm_v1alpha1_internal_proto_rawDesc = []byte{
 	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x13, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x6f, 0x72, 0x6d,
 	0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x1a, 0x17, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
 	0x73, 0x2f, 0x6f, 0x72, 0x6d, 0x2f, 0x76, 0x31, 0x2f, 0x6f, 0x72, 0x6d, 0x2e, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x22, 0xcc, 0x03, 0x0a, 0x12, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x53, 0x63, 0x68,
+	0x74, 0x6f, 0x22, 0xd6, 0x03, 0x0a, 0x12, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x53, 0x63, 0x68,
 	0x65, 0x6d, 0x61, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x65, 0x72,
 	0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x07, 0x76, 0x65, 0x72, 0x73,
 	0x69, 0x6f, 0x6e, 0x12, 0x48, 0x0a, 0x05, 0x66, 0x69, 0x6c, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03,
@@ -1946,39 +2002,39 @@ var file_cosmos_orm_v1alpha1_internal_proto_rawDesc = []byte{
 	0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x52, 0x05, 0x66, 0x69, 0x6c, 0x65, 0x73, 0x1a, 0x91, 0x01,
 	0x0a, 0x0a, 0x46, 0x69, 0x6c, 0x65, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x12, 0x0e, 0x0a, 0x02,
 	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02, 0x69, 0x64, 0x12, 0x26, 0x0a, 0x0f,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x5f, 0x66, 0x69, 0x6c, 0x65, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x5f, 0x66, 0x69, 0x6c, 0x65, 0x5f, 0x70, 0x61, 0x74, 0x68, 0x18,
 	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x46, 0x69, 0x6c, 0x65,
-	0x4e, 0x61, 0x6d, 0x65, 0x12, 0x4b, 0x0a, 0x06, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x73, 0x18, 0x03,
+	0x50, 0x61, 0x74, 0x68, 0x12, 0x4b, 0x0a, 0x06, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x73, 0x18, 0x03,
 	0x20, 0x01, 0x28, 0x0b, 0x32, 0x33, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x6f, 0x72,
 	0x6d, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x2e, 0x4d, 0x6f, 0x64, 0x75, 0x6c,
 	0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x2e, 0x54, 0x61,
 	0x62, 0x6c, 0x65, 0x52, 0x65, 0x63, 0x6f, 0x72, 0x64, 0x52, 0x06, 0x74, 0x61, 0x62, 0x6c, 0x65,
-	0x73, 0x1a, 0xbd, 0x01, 0x0a, 0x0b, 0x54, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x63, 0x6f, 0x72,
+	0x73, 0x1a, 0xc7, 0x01, 0x0a, 0x0b, 0x54, 0x61, 0x62, 0x6c, 0x65, 0x52, 0x65, 0x63, 0x6f, 0x72,
+	0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02, 0x69,
 	0x64, 0x12, 0x24, 0x0a, 0x0e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x5f, 0x6d, 0x73, 0x67, 0x5f, 0x6e,
-	0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x4d, 0x73, 0x67, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x36, 0x0a, 0x05, 0x74, 0x61, 0x62, 0x6c, 0x65,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
 	0x6f, 0x72, 0x6d, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x61, 0x62, 0x6c, 0x65, 0x44, 0x65, 0x73, 0x63,
 	0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x48, 0x00, 0x52, 0x05, 0x74, 0x61, 0x62, 0x6c, 0x65, 0x12,
-	0x42, 0x0a, 0x09, 0x73, 0x69, 0x6e, 0x67, 0x6c, 0x65, 0x74, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01,
+	0x42, 0x0a, 0x09, 0x73, 0x69, 0x6e, 0x67, 0x6c, 0x65, 0x74, 0x6f, 0x6e, 0x18, 0x04, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x22, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x6f, 0x72, 0x6d, 0x2e,
 	0x76, 0x31, 0x2e, 0x53, 0x69, 0x6e, 0x67, 0x6c, 0x65, 0x74, 0x6f, 0x6e, 0x44, 0x65, 0x73, 0x63,
 	0x72, 0x69, 0x70, 0x74, 0x6f, 0x72, 0x48, 0x00, 0x52, 0x09, 0x73, 0x69, 0x6e, 0x67, 0x6c, 0x65,
-	0x74, 0x6f, 0x6e, 0x42, 0x0c, 0x0a, 0x0a, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x6f,
-	0x72, 0x42, 0xc8, 0x01, 0x0a, 0x17, 0x63, 0x6f, 0x6d, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
-	0x2e, 0x6f, 0x72, 0x6d, 0x2e, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x42, 0x0d, 0x49,
-	0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x30,
-	0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69,
-	0x2f, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2f, 0x6f, 0x72, 0x6d, 0x2f, 0x76, 0x31, 0x61, 0x6c,
-	0x70, 0x68, 0x61, 0x31, 0x3b, 0x6f, 0x72, 0x6d, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31,
-	0xa2, 0x02, 0x03, 0x43, 0x4f, 0x58, 0xaa, 0x02, 0x13, 0x43, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e,
-	0x4f, 0x72, 0x6d, 0x2e, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0xca, 0x02, 0x13, 0x43,
+	0x74, 0x6f, 0x6e, 0x42, 0x06, 0x0a, 0x04, 0x64, 0x65, 0x73, 0x63, 0x42, 0xc8, 0x01, 0x0a, 0x17,
+	0x63, 0x6f, 0x6d, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x6f, 0x72, 0x6d, 0x2e, 0x76,
+	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x42, 0x0d, 0x49, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61,
+	0x6c, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x30, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
+	0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x63, 0x6f, 0x73, 0x6d, 0x6f,
+	0x73, 0x2f, 0x6f, 0x72, 0x6d, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x3b, 0x6f,
+	0x72, 0x6d, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0xa2, 0x02, 0x03, 0x43, 0x4f, 0x58,
+	0xaa, 0x02, 0x13, 0x43, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x4f, 0x72, 0x6d, 0x2e, 0x56, 0x31,
+	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0xca, 0x02, 0x13, 0x43, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5c,
+	0x4f, 0x72, 0x6d, 0x5c, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0xe2, 0x02, 0x1f, 0x43,
 	0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5c, 0x4f, 0x72, 0x6d, 0x5c, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68,
-	0x61, 0x31, 0xe2, 0x02, 0x1f, 0x43, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x5c, 0x4f, 0x72, 0x6d, 0x5c,
-	0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61,
-	0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x15, 0x43, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x3a, 0x3a, 0x4f,
-	0x72, 0x6d, 0x3a, 0x3a, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x61, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02,
+	0x15, 0x43, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x3a, 0x3a, 0x4f, 0x72, 0x6d, 0x3a, 0x3a, 0x56, 0x31,
+	0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (

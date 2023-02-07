@@ -44,7 +44,6 @@ type ModuleDB interface {
 
 	AutoMigrate(context.Context) error
 	MigrateFrom(ctx context.Context, oldSchema *ormv1alpha1.ModuleSchemaRecord) error
-	SaveSchema(context.Context) error
 
 	private()
 }
@@ -150,7 +149,7 @@ func NewModuleDB(schema *ormv1alpha1.ModuleSchemaDescriptor, options ModuleDBOpt
 		}
 
 		id := entry.Id
-		fileDescriptor, err := fileResolver.FindFileByPath(entry.ProtoFileName)
+		fileDescriptor, err := fileResolver.FindFileByPath(entry.ProtoFilePath)
 		if err != nil {
 			return nil, err
 		}
@@ -180,6 +179,8 @@ func NewModuleDB(schema *ormv1alpha1.ModuleSchemaDescriptor, options ModuleDBOpt
 
 			db.tablesByName[name] = table
 		}
+
+		fdSchema.schemaRecord()
 	}
 
 	return db, nil

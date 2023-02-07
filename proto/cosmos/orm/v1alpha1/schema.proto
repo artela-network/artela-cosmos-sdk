@@ -22,10 +22,8 @@ message ModuleSchemaDescriptor {
     // table keys specified in the file's tables.
     uint32 id = 1;
 
-    // proto_file_name is the name of a file .proto in that contains
-    // table definitions. The .proto file must be in a package that the
-    // module has referenced using cosmos.app.v1.ModuleDescriptor.use_package.
-    string proto_file_name = 2;
+    // proto_file_path is the path to a .proto file that contains table definitions.
+    string proto_file_path = 2;
 
     // storage_type optionally indicates the type of storage this file's
     // tables should used. If it is left unspecified, the default KV-storage

@@ -8,6 +8,7 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoregistry"
 
+	ormv1alpha1 "cosmossdk.io/api/cosmos/orm/v1alpha1"
 	"github.com/cosmos/cosmos-sdk/orm/encoding/encodeutil"
 
 	"github.com/cosmos/cosmos-sdk/orm/encoding/ormkv"
@@ -38,7 +39,7 @@ type fileDescriptorDB struct {
 func newFileDescriptorDB(fileDescriptor protoreflect.FileDescriptor, options fileDescriptorDBOptions) (*fileDescriptorDB, error) {
 	prefix := encodeutil.AppendVarUInt32(options.Prefix, options.ID)
 
-	schema := &fileDescriptorDB{
+	db := &fileDescriptorDB{
 		id:             options.ID,
 		prefix:         prefix,
 		tablesById:     map[uint32]ormtable.Table{},
@@ -76,18 +77,18 @@ func newFileDescriptorDB(fileDescriptor protoreflect.FileDescriptor, options fil
 		}
 
 		id := table.ID()
-		if _, ok := schema.tablesById[id]; ok {
+		if _, ok := db.tablesById[id]; ok {
 			return nil, ormerrors.InvalidTableId.Wrapf("duplicate ID %d for %s", id, tableName)
 		}
-		schema.tablesById[id] = table
+		db.tablesById[id] = table
 
-		if _, ok := schema.tablesByName[tableName]; ok {
+		if _, ok := db.tablesByName[tableName]; ok {
 			return nil, ormerrors.InvalidTableDefinition.Wrapf("duplicate table %s", tableName)
 		}
-		schema.tablesByName[tableName] = table
+		db.tablesByName[tableName] = table
 	}
 
-	return schema, nil
+	return db, nil
 }
 
 func (f fileDescriptorDB) DecodeEntry(k, v []byte) (ormkv.Entry, error) {
@@ -121,6 +122,14 @@ func (f fileDescriptorDB) EncodeEntry(entry ormkv.Entry) (k, v []byte, err error
 	}
 
 	return table.EncodeEntry(entry)
+}
+
+func (f fileDescriptorDB) schemaRecord() *ormv1alpha1.ModuleSchemaRecord_FileRecord {
+	return &ormv1alpha1.ModuleSchemaRecord_FileRecord{
+		Id:            f.id,
+		ProtoFilePath: f.fileDescriptor.Path(),
+		Tables:        nil,
+	}
 }
 
 var _ ormkv.EntryCodec = fileDescriptorDB{}
