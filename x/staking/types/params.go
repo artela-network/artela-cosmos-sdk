@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"sigs.k8s.io/yaml"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,12 +58,6 @@ func DefaultParams() Params {
 	)
 }
 
-// String returns a human readable string representation of the parameters.
-func (p Params) String() string {
-	out, _ := yaml.Marshal(p)
-	return string(out)
-}
-
 // unmarshal the current staking params value from store key or panic
 func MustUnmarshalParams(cdc *codec.LegacyAmino, value []byte) Params {
 	params, err := UnmarshalParams(cdc, value)
@@ -104,6 +97,10 @@ func (p Params) Validate() error {
 	}
 
 	if err := validateMinCommissionRate(p.MinCommissionRate); err != nil {
+		return err
+	}
+
+	if err := validateHistoricalEntries(p.HistoricalEntries); err != nil {
 		return err
 	}
 

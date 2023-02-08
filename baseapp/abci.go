@@ -10,14 +10,16 @@ import (
 	"syscall"
 	"time"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/gogoproto/proto"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 
+	snapshottypes "cosmossdk.io/store/snapshots/types"
+	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -36,22 +38,26 @@ const (
 func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitChain) {
 	// On a new chain, we consider the init chain block height as 0, even though
 	// req.InitialHeight is 1 by default.
-	initHeader := tmproto.Header{ChainID: req.ChainId, Time: req.Time}
+	initHeader := cmtproto.Header{ChainID: req.ChainId, Time: req.Time}
+
+	app.logger.Info("InitChain", "initialHeight", req.InitialHeight, "chainID", req.ChainId)
 
 	// If req.InitialHeight is > 1, then we set the initial version in the
 	// stores.
 	if req.InitialHeight > 1 {
 		app.initialHeight = req.InitialHeight
-		initHeader = tmproto.Header{ChainID: req.ChainId, Height: req.InitialHeight, Time: req.Time}
+		initHeader = cmtproto.Header{ChainID: req.ChainId, Height: req.InitialHeight, Time: req.Time}
 		err := app.cms.SetInitialVersion(req.InitialHeight)
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	// initialize the deliver state and check state with a correct header
-	app.setDeliverState(initHeader)
-	app.setCheckState(initHeader)
+	// initialize states with a correct header
+	app.setState(runTxModeDeliver, initHeader)
+	app.setState(runTxModeCheck, initHeader)
+	app.setState(runTxPrepareProposal, initHeader)
+	app.setState(runTxProcessProposal, initHeader)
 
 	// Store the consensus params in the BaseApp's paramstore. Note, this must be
 	// done after the deliver state and context have been set as it's persisted
@@ -65,9 +71,12 @@ func (app *BaseApp) InitChain(req abci.RequestInitChain) (res abci.ResponseInitC
 	}
 
 	// add block gas meter for any genesis transactions (allow infinite gas)
-	app.deliverState.ctx = app.deliverState.ctx.WithBlockGasMeter(sdk.NewInfiniteGasMeter())
+	app.deliverState.ctx = app.deliverState.ctx.WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
-	res = app.initChainer(app.deliverState.ctx, req)
+	res, err := app.initChainer(app.deliverState.ctx, req)
+	if err != nil {
+		panic(err)
+	}
 
 	// sanity check
 	if len(req.Validators) > 0 {
@@ -145,7 +154,7 @@ func (app *BaseApp) FilterPeerByID(info string) abci.ResponseQuery {
 // BeginBlock implements the ABCI application interface.
 func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeginBlock) {
 	if app.cms.TracingEnabled() {
-		app.cms.SetTracingContext(sdk.TraceContext(
+		app.cms.SetTracingContext(storetypes.TraceContext(
 			map[string]interface{}{"blockHeight": req.Header.Height},
 		))
 	}
@@ -158,7 +167,7 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	// already be initialized in InitChain. Otherwise app.deliverState will be
 	// nil, since it is reset on Commit.
 	if app.deliverState == nil {
-		app.setDeliverState(req.Header)
+		app.setState(runTxModeDeliver, req.Header)
 	} else {
 		// In the first block, app.deliverState.ctx will already be initialized
 		// by InitChain. Context is now updated with Header information.
@@ -168,11 +177,11 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	}
 
 	// add block gas meter
-	var gasMeter sdk.GasMeter
-	if maxGas := app.getMaximumBlockGas(app.deliverState.ctx); maxGas > 0 {
-		gasMeter = sdk.NewGasMeter(maxGas)
+	var gasMeter storetypes.GasMeter
+	if maxGas := app.GetMaximumBlockGas(app.deliverState.ctx); maxGas > 0 {
+		gasMeter = storetypes.NewGasMeter(maxGas)
 	} else {
-		gasMeter = sdk.NewInfiniteGasMeter()
+		gasMeter = storetypes.NewInfiniteGasMeter()
 	}
 
 	// NOTE: header hash is not set in NewContext, so we manually set it here
@@ -182,8 +191,6 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 		WithHeaderHash(req.Hash).
 		WithConsensusParams(app.GetConsensusParams(app.deliverState.ctx))
 
-	// we also set block gas meter to checkState in case the application needs to
-	// verify gas consumption during (Re)CheckTx
 	if app.checkState != nil {
 		app.checkState.ctx = app.checkState.ctx.
 			WithBlockGasMeter(gasMeter).
@@ -191,7 +198,11 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	}
 
 	if app.beginBlocker != nil {
-		res = app.beginBlocker(app.deliverState.ctx, req)
+		var err error
+		res, err = app.beginBlocker(app.deliverState.ctx, req)
+		if err != nil {
+			panic(err)
+		}
 		res.Events = sdk.MarkEventsToIndex(res.Events, app.indexEvents)
 	}
 	// set the signed validators for addition to context in deliverTx
@@ -200,7 +211,7 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	// call the hooks with the BeginBlock messages
 	for _, streamingListener := range app.abciListeners {
 		if err := streamingListener.ListenBeginBlock(app.deliverState.ctx, req, res); err != nil {
-			app.logger.Error("BeginBlock listening hook failed", "height", req.Header.Height, "err", err)
+			panic(fmt.Errorf("BeginBlock listening hook failed, height: %d, err: %w", req.Header.Height, err))
 		}
 	}
 
@@ -210,11 +221,15 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 // EndBlock implements the ABCI interface.
 func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBlock) {
 	if app.deliverState.ms.TracingEnabled() {
-		app.deliverState.ms = app.deliverState.ms.SetTracingContext(nil).(sdk.CacheMultiStore)
+		app.deliverState.ms = app.deliverState.ms.SetTracingContext(nil).(storetypes.CacheMultiStore)
 	}
 
 	if app.endBlocker != nil {
-		res = app.endBlocker(app.deliverState.ctx, req)
+		var err error
+		res, err = app.endBlocker(app.deliverState.ctx, req)
+		if err != nil {
+			panic(err)
+		}
 		res.Events = sdk.MarkEventsToIndex(res.Events, app.indexEvents)
 	}
 
@@ -225,7 +240,7 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 	// call the streaming service hooks with the EndBlock messages
 	for _, streamingListener := range app.abciListeners {
 		if err := streamingListener.ListenEndBlock(app.deliverState.ctx, req, res); err != nil {
-			app.logger.Error("EndBlock listening hook failed", "height", req.Height, "err", err)
+			panic(fmt.Errorf("EndBlock listening hook failed, height: %d, err: %w", req.Height, err))
 		}
 	}
 
@@ -238,19 +253,46 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 // work in a block before proposing it.
 //
 // Transactions can be modified, removed, or added by the application. Since the
-// application maintains it's own local mempool, it will ignore the transactions
+// application maintains its own local mempool, it will ignore the transactions
 // provided to it in RequestPrepareProposal. Instead, it will determine which
 // transactions to return based on the mempool's semantics and the MaxTxBytes
 // provided by the client's request.
 //
-// Note, there is no need to execute the transactions for validity as they have
-// already passed CheckTx.
-//
 // Ref: https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-060-abci-1.0.md
-// Ref: https://github.com/tendermint/tendermint/blob/main/spec/abci/abci%2B%2B_basic_concepts.md
-func (app *BaseApp) PrepareProposal(req abci.RequestPrepareProposal) abci.ResponsePrepareProposal {
-	// TODO: Implement.
-	return abci.ResponsePrepareProposal{Txs: req.Txs}
+// Ref: https://github.com/cometbft/cometbft/blob/main/spec/abci/abci%2B%2B_basic_concepts.md
+func (app *BaseApp) PrepareProposal(req abci.RequestPrepareProposal) (resp abci.ResponsePrepareProposal) {
+	if app.prepareProposal == nil {
+		panic("PrepareProposal method not set")
+	}
+
+	// CometBFT must never call PrepareProposal with a height of 0.
+	// Ref: https://github.com/cometbft/cometbft/blob/059798a4f5b0c9f52aa8655fa619054a0154088c/spec/core/state.md?plain=1#L37-L38
+	if req.Height < 1 {
+		panic("PrepareProposal called with invalid height")
+	}
+
+	ctx := app.getContextForProposal(app.prepareProposalState.ctx, req.Height)
+
+	ctx = ctx.WithVoteInfos(app.voteInfos).
+		WithBlockHeight(req.Height).
+		WithBlockTime(req.Time).
+		WithProposer(req.ProposerAddress).
+		WithConsensusParams(app.GetConsensusParams(ctx))
+
+	defer func() {
+		if err := recover(); err != nil {
+			app.logger.Error(
+				"panic recovered in PrepareProposal",
+				"height", req.Height,
+				"time", req.Time,
+				"panic", err,
+			)
+			resp = abci.ResponsePrepareProposal{Txs: req.Txs}
+		}
+	}()
+
+	resp = app.prepareProposal(ctx, req)
+	return resp
 }
 
 // ProcessProposal implements the ProcessProposal ABCI method and returns a
@@ -259,15 +301,45 @@ func (app *BaseApp) PrepareProposal(req abci.RequestPrepareProposal) abci.Respon
 // block. Note, the application defines the exact implementation details of
 // ProcessProposal. In general, the application must at the very least ensure
 // that all transactions are valid. If all transactions are valid, then we inform
-// Tendermint that the Status is ACCEPT. However, the application is also able
+// CometBFT that the Status is ACCEPT. However, the application is also able
 // to implement optimizations such as executing the entire proposed block
-// immediately. It may even execute the block in parallel.
+// immediately.
+//
+// If a panic is detected during execution of an application's ProcessProposal
+// handler, it will be recovered and we will reject the proposal.
 //
 // Ref: https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-060-abci-1.0.md
-// Ref: https://github.com/tendermint/tendermint/blob/main/spec/abci/abci%2B%2B_basic_concepts.md
-func (app *BaseApp) ProcessProposal(req abci.RequestProcessProposal) abci.ResponseProcessProposal {
-	// TODO: Implement.
-	return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}
+// Ref: https://github.com/cometbft/cometbft/blob/main/spec/abci/abci%2B%2B_basic_concepts.md
+func (app *BaseApp) ProcessProposal(req abci.RequestProcessProposal) (resp abci.ResponseProcessProposal) {
+	if app.processProposal == nil {
+		panic("app.ProcessProposal is not set")
+	}
+
+	ctx := app.getContextForProposal(app.processProposalState.ctx, req.Height)
+
+	ctx = ctx.
+		WithVoteInfos(app.voteInfos).
+		WithBlockHeight(req.Height).
+		WithBlockTime(req.Time).
+		WithHeaderHash(req.Hash).
+		WithProposer(req.ProposerAddress).
+		WithConsensusParams(app.GetConsensusParams(ctx))
+
+	defer func() {
+		if err := recover(); err != nil {
+			app.logger.Error(
+				"panic recovered in ProcessProposal",
+				"height", req.Height,
+				"time", req.Time,
+				"hash", fmt.Sprintf("%X", req.Hash),
+				"panic", err,
+			)
+			resp = abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+		}
+	}()
+
+	resp = app.processProposal(ctx, req)
+	return resp
 }
 
 // CheckTx implements the ABCI interface and executes a tx in CheckTx mode. In
@@ -317,7 +389,7 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliv
 	defer func() {
 		for _, streamingListener := range app.abciListeners {
 			if err := streamingListener.ListenDeliverTx(app.deliverState.ctx, req, res); err != nil {
-				app.logger.Error("DeliverTx listening hook failed", "err", err)
+				panic(fmt.Errorf("DeliverTx listening hook failed: %w", err))
 			}
 		}
 	}()
@@ -351,7 +423,7 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliv
 // defined in config, Commit will execute a deferred function call to check
 // against that height and gracefully halt if it matches the latest committed
 // height.
-func (app *BaseApp) Commit() (res abci.ResponseCommit) {
+func (app *BaseApp) Commit() abci.ResponseCommit {
 	header := app.deliverState.ctx.BlockHeader()
 	retainHeight := app.GetBlockRetentionHeight(header.Height)
 
@@ -360,13 +432,28 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	// MultiStore (app.cms) so when Commit() is called is persists those values.
 	app.deliverState.ms.Write()
 	commitID := app.cms.Commit()
+
+	res := abci.ResponseCommit{
+		Data:         commitID.Hash,
+		RetainHeight: retainHeight,
+	}
+
+	// call the hooks with the Commit message
+	for _, streamingListener := range app.abciListeners {
+		if err := streamingListener.ListenCommit(app.deliverState.ctx, res); err != nil {
+			panic(fmt.Errorf("Commit listening hook failed, height: %d, err: %w", header.Height, err))
+		}
+	}
+
 	app.logger.Info("commit synced", "commit", fmt.Sprintf("%X", commitID))
 
 	// Reset the Check state to the latest committed.
 	//
-	// NOTE: This is safe because Tendermint holds a lock on the mempool for
+	// NOTE: This is safe because CometBFT holds a lock on the mempool for
 	// Commit. Use the header from this latest block.
-	app.setCheckState(header)
+	app.setState(runTxModeCheck, header)
+	app.setState(runTxPrepareProposal, header)
+	app.setState(runTxProcessProposal, header)
 
 	// empty/reset the deliver state
 	app.deliverState = nil
@@ -382,7 +469,7 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	}
 
 	if halt {
-		// Halt the binary and allow Tendermint to receive the ResponseCommit
+		// Halt the binary and allow CometBFT to receive the ResponseCommit
 		// response with the commit ID hash. This will allow the node to successfully
 		// restart and process blocks assuming the halt configuration has been
 		// reset or moved to a more distant value.
@@ -391,10 +478,7 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 
 	go app.snapshotManager.SnapshotIfApplicable(header.Height)
 
-	return abci.ResponseCommit{
-		Data:         commitID.Hash,
-		RetainHeight: retainHeight,
-	}
+	return res
 }
 
 // halt attempts to gracefully shutdown the node via SIGINT and SIGTERM falling
@@ -553,7 +637,7 @@ func (app *BaseApp) OfferSnapshot(req abci.RequestOfferSnapshot) abci.ResponseOf
 		)
 
 		// We currently don't support resetting the IAVL stores and retrying a different snapshot,
-		// so we ask Tendermint to abort all snapshot restoration.
+		// so we ask CometBFT to abort all snapshot restoration.
 		return abci.ResponseOfferSnapshot{Result: abci.ResponseOfferSnapshot_ABORT}
 	}
 }
@@ -590,7 +674,7 @@ func (app *BaseApp) ApplySnapshotChunk(req abci.RequestApplySnapshotChunk) abci.
 }
 
 func (app *BaseApp) handleQueryGRPC(handler GRPCQueryHandler, req abci.RequestQuery) abci.ResponseQuery {
-	ctx, err := app.createQueryContext(req.Height, req.Prove)
+	ctx, err := app.CreateQueryContext(req.Height, req.Prove)
 	if err != nil {
 		return sdkerrors.QueryResult(err, app.trace)
 	}
@@ -638,7 +722,7 @@ func checkNegativeHeight(height int64) error {
 
 // createQueryContext creates a new sdk.Context for a query, taking as args
 // the block height and whether the query needs a proof or not.
-func (app *BaseApp) createQueryContext(height int64, prove bool) (sdk.Context, error) {
+func (app *BaseApp) CreateQueryContext(height int64, prove bool) (sdk.Context, error) {
 	if err := checkNegativeHeight(height); err != nil {
 		return sdk.Context{}, err
 	}
@@ -646,10 +730,14 @@ func (app *BaseApp) createQueryContext(height int64, prove bool) (sdk.Context, e
 	// use custom query multistore if provided
 	qms := app.qms
 	if qms == nil {
-		qms = app.cms.(sdk.MultiStore)
+		qms = app.cms.(storetypes.MultiStore)
 	}
 
 	lastBlockHeight := qms.LatestVersion()
+	if lastBlockHeight == 0 {
+		return sdk.Context{}, sdkerrors.Wrapf(sdkerrors.ErrInvalidHeight, "%s is not ready; please wait for first block", app.Name())
+	}
+
 	if height > lastBlockHeight {
 		return sdk.Context{},
 			sdkerrors.Wrap(
@@ -681,15 +769,15 @@ func (app *BaseApp) createQueryContext(height int64, prove bool) (sdk.Context, e
 	}
 
 	// branch the commit-multistore for safety
-	ctx := sdk.NewContext(
-		cacheMS, app.checkState.ctx.BlockHeader(), true, app.logger,
-	).WithMinGasPrices(app.minGasPrices).WithBlockHeight(height)
+	ctx := sdk.NewContext(cacheMS, app.checkState.ctx.BlockHeader(), true, app.logger).
+		WithMinGasPrices(app.minGasPrices).
+		WithBlockHeight(height)
 
 	return ctx, nil
 }
 
 // GetBlockRetentionHeight returns the height for which all blocks below this height
-// are pruned from Tendermint. Given a commitment height and a non-zero local
+// are pruned from CometBFT. Given a commitment height and a non-zero local
 // minRetainBlocks configuration, the retentionHeight is the smallest height that
 // satisfies:
 //
@@ -730,7 +818,7 @@ func (app *BaseApp) GetBlockRetentionHeight(commitHeight int64) int64 {
 
 	// Define retentionHeight as the minimum value that satisfies all non-zero
 	// constraints. All blocks below (commitHeight-retentionHeight) are pruned
-	// from Tendermint.
+	// from CometBFT.
 	var retentionHeight int64
 
 	// Define the number of blocks needed to protect against misbehaving validators
@@ -809,7 +897,7 @@ func handleQueryApp(app *BaseApp, path []string, req abci.RequestQuery) abci.Res
 
 func handleQueryStore(app *BaseApp, path []string, req abci.RequestQuery) abci.ResponseQuery {
 	// "/store" prefix for store queries
-	queryable, ok := app.cms.(sdk.Queryable)
+	queryable, ok := app.cms.(storetypes.Queryable)
 	if !ok {
 		return sdkerrors.QueryResult(sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "multistore doesn't support queries"), app.trace)
 	}
@@ -871,4 +959,15 @@ func SplitABCIQueryPath(requestPath string) (path []string) {
 	}
 
 	return path
+}
+
+// getContextForProposal returns the right context for PrepareProposal and
+// ProcessProposal. We use deliverState on the first block to be able to access
+// any state changes made in InitChain.
+func (app *BaseApp) getContextForProposal(ctx sdk.Context, height int64) sdk.Context {
+	if height == 1 {
+		ctx, _ = app.deliverState.ctx.CacheContext()
+		return ctx
+	}
+	return ctx
 }

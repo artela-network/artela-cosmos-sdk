@@ -7,16 +7,17 @@ import (
 	modulev1 "cosmossdk.io/api/cosmos/consensus/module/v1"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/depinject"
+	abci "github.com/cometbft/cometbft/abci/types"
 	gwruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
+
+	store "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
-	store "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -25,7 +26,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
-// ConsensusVersion defines the current x/bank module consensus version.
+// ConsensusVersion defines the current x/consensus module consensus version.
 const ConsensusVersion = 1
 
 var (
@@ -42,7 +43,9 @@ type AppModuleBasic struct {
 func (AppModuleBasic) Name() string { return types.ModuleName }
 
 // RegisterLegacyAminoCodec registers the consensus_param module's types on the LegacyAmino codec.
-func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {}
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	types.RegisterLegacyAminoCodec(cdc)
+}
 
 // DefaultGenesis returns default genesis state as raw bytes for the consensus_param
 // module.
@@ -85,6 +88,14 @@ type AppModule struct {
 	keeper keeper.Keeper
 }
 
+var _ appmodule.AppModule = AppModule{}
+
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
@@ -103,13 +114,13 @@ func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
 func (AppModule) Name() string { return types.ModuleName }
 
 // InitGenesis is handled by for init genesis of consensus_param
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(sdk.Context, codec.JSONCodec, json.RawMessage) []abci.ValidatorUpdate {
 	// nil is returned since initgenesis of consensus params is handled by tendermint
 	return nil
 }
 
 // ExportGenesis is handled by tendermint export of genesis
-func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
+func (am AppModule) ExportGenesis(sdk.Context, codec.JSONCodec) json.RawMessage {
 	// nil is returned since ExportGenesis of consensus params is handled by tendermint and baseapp
 	return nil
 }
@@ -118,41 +129,38 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
 
 // RegisterInvariants does nothing, there are no invariants to enforce
-func (am AppModule) RegisterInvariants(ir sdk.InvariantRegistry) {}
+func (am AppModule) RegisterInvariants(sdk.InvariantRegistry) {}
 
 func init() {
 	appmodule.Register(
 		&modulev1.Module{},
-		appmodule.Provide(ProvideModuleBasic, ProvideModule),
+		appmodule.Provide(ProvideModule),
 	)
 }
 
-func ProvideModuleBasic() runtime.AppModuleBasicWrapper {
-	return runtime.WrapAppModuleBasic(AppModuleBasic{})
-}
-
-type ConsensusParamInputs struct {
+//nolint:revive
+type ConsensusInputs struct {
 	depinject.In
 
-	Cdc       codec.Codec
-	Key       *store.KVStoreKey
-	ModuleKey depinject.OwnModuleKey
-	Authority map[string]sdk.AccAddress `optional:"true"`
+	Config *modulev1.Module
+	Cdc    codec.Codec
+	Key    *store.KVStoreKey
 }
 
-type ConsensusParamOutputs struct {
+//nolint:revive
+type ConsensusOutputs struct {
 	depinject.Out
 
 	Keeper        keeper.Keeper
-	Module        runtime.AppModuleWrapper
+	Module        appmodule.AppModule
 	BaseAppOption runtime.BaseAppOption
 }
 
-func ProvideModule(in ConsensusParamInputs) ConsensusParamOutputs {
-	authority, ok := in.Authority[depinject.ModuleKey(in.ModuleKey).Name()]
-	if !ok {
-		// default to governance authority if not provided
-		authority = authtypes.NewModuleAddress(govtypes.ModuleName)
+func ProvideModule(in ConsensusInputs) ConsensusOutputs {
+	// default to governance authority if not provided
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	if in.Config.Authority != "" {
+		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
 	}
 
 	k := keeper.NewKeeper(in.Cdc, in.Key, authority.String())
@@ -161,9 +169,9 @@ func ProvideModule(in ConsensusParamInputs) ConsensusParamOutputs {
 		app.SetParamStore(&k)
 	}
 
-	return ConsensusParamOutputs{
+	return ConsensusOutputs{
 		Keeper:        k,
-		Module:        runtime.WrapAppModule(m),
+		Module:        m,
 		BaseAppOption: baseappOpt,
 	}
 }

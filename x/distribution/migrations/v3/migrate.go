@@ -1,8 +1,9 @@
 package v3
 
 import (
+	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/exported"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -22,6 +23,10 @@ func MigrateStore(ctx sdk.Context, storeKey storetypes.StoreKey, legacySubspace 
 	store := ctx.KVStore(storeKey)
 	var currParams types.Params
 	legacySubspace.GetParamSet(ctx, &currParams)
+
+	// reset unused params
+	currParams.BaseProposerReward = sdk.ZeroDec()
+	currParams.BonusProposerReward = sdk.ZeroDec()
 
 	if err := currParams.ValidateBasic(); err != nil {
 		return err

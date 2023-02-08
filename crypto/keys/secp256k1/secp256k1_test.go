@@ -9,11 +9,11 @@ import (
 
 	btcSecp256k1 "github.com/btcsuite/btcd/btcec/v2"
 	btcecdsa "github.com/btcsuite/btcd/btcec/v2/ecdsa"
+	"github.com/cometbft/cometbft/crypto"
+	tmsecp256k1 "github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cosmos/btcutil/base58"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto"
-	tmsecp256k1 "github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -134,7 +134,7 @@ func TestGenPrivKeyFromSecret(t *testing.T) {
 			gotPrivKey := secp256k1.GenPrivKeyFromSecret(tt.secret)
 			require.NotNil(t, gotPrivKey)
 			// interpret as a big.Int and make sure it is a valid field element:
-			fe := new(big.Int).SetBytes(gotPrivKey.Key[:])
+			fe := new(big.Int).SetBytes(gotPrivKey.Key)
 			require.True(t, fe.Cmp(N) < 0)
 			require.True(t, fe.Sign() > 0)
 		})

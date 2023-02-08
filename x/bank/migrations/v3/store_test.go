@@ -3,11 +3,12 @@ package v3_test
 import (
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/math"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
@@ -19,8 +20,8 @@ import (
 
 func TestMigrateStore(t *testing.T) {
 	encCfg := moduletestutil.MakeTestEncodingConfig()
-	bankKey := sdk.NewKVStoreKey("bank")
-	ctx := testutil.DefaultContext(bankKey, sdk.NewTransientStoreKey("transient_test"))
+	bankKey := storetypes.NewKVStoreKey("bank")
+	ctx := testutil.DefaultContext(bankKey, storetypes.NewTransientStoreKey("transient_test"))
 	store := ctx.KVStore(bankKey)
 
 	addr := sdk.AccAddress([]byte("addr________________"))
@@ -32,7 +33,7 @@ func TestMigrateStore(t *testing.T) {
 	)
 
 	for _, b := range balances {
-		bz, err := encCfg.Codec.Marshal(&b)
+		bz, err := encCfg.Codec.Marshal(&b) //nolint:gosec // G601: Implicit memory aliasing in for loop.
 		require.NoError(t, err)
 
 		prefixAccStore.Set([]byte(b.Denom), bz)
@@ -57,8 +58,8 @@ func TestMigrateStore(t *testing.T) {
 
 func TestMigrateDenomMetaData(t *testing.T) {
 	encCfg := moduletestutil.MakeTestEncodingConfig()
-	bankKey := sdk.NewKVStoreKey("bank")
-	ctx := testutil.DefaultContext(bankKey, sdk.NewTransientStoreKey("transient_test"))
+	bankKey := storetypes.NewKVStoreKey("bank")
+	ctx := testutil.DefaultContext(bankKey, storetypes.NewTransientStoreKey("transient_test"))
 	store := ctx.KVStore(bankKey)
 	metaData := []types.Metadata{
 		{
@@ -89,8 +90,8 @@ func TestMigrateDenomMetaData(t *testing.T) {
 	denomMetadataStore := prefix.NewStore(store, v2.DenomMetadataPrefix)
 
 	for i := range []int{0, 1} {
-		key := append(v2.DenomMetadataPrefix, []byte(metaData[i].Base)...)
 		// keys before 0.45 had denom two times in the key
+		key := append([]byte{}, []byte(metaData[i].Base)...)
 		key = append(key, []byte(metaData[i].Base)...)
 		bz, err := encCfg.Codec.Marshal(&metaData[i])
 		require.NoError(t, err)
@@ -107,11 +108,11 @@ func TestMigrateDenomMetaData(t *testing.T) {
 		newKey := denomMetadataIter.Key()
 
 		// make sure old entry is deleted
-		oldKey := append(newKey, newKey[1:]...)
+		oldKey := append(newKey, newKey[0:]...) //nolint:gocritic // append is ok here
 		bz := denomMetadataStore.Get(oldKey)
 		require.Nil(t, bz)
 
-		require.Equal(t, string(newKey)[1:], metaData[i].Base, "idx: %d", i)
+		require.Equal(t, string(newKey), metaData[i].Base, "idx: %d", i)
 		bz = denomMetadataStore.Get(denomMetadataIter.Key())
 		require.NotNil(t, bz)
 		err := encCfg.Codec.Unmarshal(bz, &result)

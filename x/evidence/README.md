@@ -22,7 +22,7 @@ that allows for the submission and handling of arbitrary evidence of misbehavior
 as equivocation and counterfactual signing.
 
 The evidence module differs from standard evidence handling which typically expects the
-underlying consensus engine, e.g. Tendermint, to automatically submit evidence when
+underlying consensus engine, e.g. CometBFT, to automatically submit evidence when
 it is discovered by allowing clients and foreign chains to submit more complex evidence
 directly.
 
@@ -36,9 +36,9 @@ Each corresponding handler must also fulfill the `Handler` interface contract. T
 `Handler` for a given `Evidence` type can perform any arbitrary state transitions
 such as slashing, jailing, and tombstoning.
 
-# Concepts
+## Concepts
 
-## Evidence
+### Evidence
 
 Any concrete type of evidence submitted to the `x/evidence` module must fulfill the
 `Evidence` contract outlined below. Not all concrete types of evidence will fulfill
@@ -53,9 +53,8 @@ type Evidence interface {
 	proto.Message
 
 	Route() string
-	Type() string
 	String() string
-	Hash() tmbytes.HexBytes
+	Hash() cmtbytes.HexBytes
 	ValidateBasic() error
 
 	// Height at which the infraction occurred
@@ -78,7 +77,7 @@ type ValidatorEvidence interface {
 }
 ```
 
-## Registration & Handling
+### Registration & Handling
 
 The `x/evidence` module must first know about all types of evidence it is expected
 to handle. This is accomplished by registering the `Route` method in the `Evidence`
@@ -112,7 +111,7 @@ type Handler func(sdk.Context, Evidence) error
 ```
 
 
-# State
+## State
 
 Currently the `x/evidence` module only stores valid submitted `Evidence` in state.
 The evidence state is also stored and exported in the `x/evidence` module's `GenesisState`.
@@ -129,9 +128,9 @@ message GenesisState {
 All `Evidence` is retrieved and stored via a prefix `KVStore` using prefix `0x00` (`KeyPrefixEvidence`).
 
 
-# Messages
+## Messages
 
-## MsgSubmitEvidence
+### MsgSubmitEvidence
 
 Evidence is submitted through a `MsgSubmitEvidence` message:
 
@@ -182,13 +181,13 @@ type. Secondly, the `Evidence` is routed to the `Handler` and executed. Finally,
 if there is no error in handling the `Evidence`, an event is emitted and it is persisted to state.
 
 
-# Events
+## Events
 
 The `x/evidence` module emits the following events:
 
-## Handlers
+### Handlers
 
-### MsgSubmitEvidence
+#### MsgSubmitEvidence
 
 | Type            | Attribute Key | Attribute Value |
 | --------------- | ------------- | --------------- |
@@ -198,29 +197,29 @@ The `x/evidence` module emits the following events:
 | message         | action        | submit_evidence |
 
 
-# Parameters
+## Parameters
 
 The evidence module does not contain any parameters.
 
 
-# BeginBlock
+## BeginBlock
 
-## Evidence Handling
+### Evidence Handling
 
-Tendermint blocks can include
-[Evidence](https://github.com/tendermint/tendermint/blob/master/docs/spec/blockchain/blockchain.md#evidence) that indicates if a validator committed malicious behavior. The relevant information is forwarded to the application as ABCI Evidence in `abci.RequestBeginBlock` so that the validator can be punished accordingly.
+CometBFT blocks can include
+[Evidence](https://github.com/cometbft/cometbft/blob/main/spec/abci/abci%2B%2B_basic_concepts.md#evidence) that indicates if a validator committed malicious behavior. The relevant information is forwarded to the application as ABCI Evidence in `abci.RequestBeginBlock` so that the validator can be punished accordingly.
 
-### Equivocation
+#### Equivocation
 
 The Cosmos SDK handles two types of evidence inside the ABCI `BeginBlock`:
 
 * `DuplicateVoteEvidence`,
 * `LightClientAttackEvidence`.
 
-The evidence module handles these two evidence types the same way. First, the Cosmos SDK converts the Tendermint concrete evidence type to an SDK `Evidence` interface using `Equivocation` as the concrete type.
+The evidence module handles these two evidence types the same way. First, the Cosmos SDK converts the CometBFT concrete evidence type to an SDK `Evidence` interface using `Equivocation` as the concrete type.
 
 ```protobuf reference
-https://github.com/cosmos/cosmos-sdk/blob/v0.46.1/proto/cosmos/evidence/v1beta1/evidence.proto#L11-L22
+https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/proto/cosmos/evidence/v1beta1/evidence.proto#L12-L32
 ```
 
 For some `Equivocation` submitted in `block` to be valid, it must satisfy:
@@ -244,20 +243,20 @@ validator to ever re-enter the validator set.
 The `Equivocation` evidence is handled as follows:
 
 ```go reference
-https://github.com/cosmos/cosmos-sdk/blob/83260b0c2f9afcc7ec94a102f83906e8e56ef18e/x/evidence/keeper/infraction.go#L26-L140
+https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/x/evidence/keeper/infraction.go#L26-L140
 ```
 
 **Note:** The slashing, jailing, and tombstoning calls are delegated through the `x/slashing` module
 that emits informative events and finally delegates calls to the `x/staking` module. See documentation
 on slashing and jailing in [State Transitions](../staking/README.md#state-transitions).
 
-# Client
+## Client
 
-## CLI
+### CLI
 
 A user can query and interact with the `evidence` module using the CLI.
 
-### Query
+#### Query
 
 The `query` commands allows users to query `evidence` state.
 
@@ -265,7 +264,7 @@ The `query` commands allows users to query `evidence` state.
 simd query evidence --help
 ```
 
-### evidence
+#### evidence
 
 The `evidence` command allows users to list all evidence or evidence by hash.
 
@@ -314,16 +313,16 @@ pagination:
   total: "1"
 ```
 
-## REST
+### REST
 
 A user can query the `evidence` module using REST endpoints.
 
-### Evidence
+#### Evidence
 
 Get evidence by hash
 
 ```bash
-/cosmos/evidence/v1beta1/evidence/{evidence_hash}
+/cosmos/evidence/v1beta1/evidence/{hash}
 ```
 
 Example:
@@ -345,7 +344,7 @@ Example Output:
 }
 ```
 
-### All evidence
+#### All evidence
 
 Get all evidence
 
@@ -377,11 +376,11 @@ Example Output:
 }
 ```
 
-## gRPC
+### gRPC
 
 A user can query the `evidence` module using gRPC endpoints.
 
-### Evidence
+#### Evidence
 
 Get evidence by hash
 
@@ -408,7 +407,7 @@ Example Output:
 }
 ```
 
-### All evidence
+#### All evidence
 
 Get all evidence
 

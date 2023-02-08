@@ -3,12 +3,13 @@ package keeper
 import (
 	"fmt"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/tendermint/tendermint/libs/log"
+
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -116,7 +117,7 @@ func (k BaseViewKeeper) IterateAccountBalances(ctx sdk.Context, addr sdk.AccAddr
 	accountStore := k.getAccountStore(ctx, addr)
 
 	iterator := accountStore.Iterator(nil, nil)
-	defer iterator.Close()
+	defer sdk.LogDeferred(ctx.Logger(), func() error { return iterator.Close() })
 
 	for ; iterator.Valid(); iterator.Next() {
 		denom := string(iterator.Key())
@@ -252,6 +253,10 @@ func (k BaseViewKeeper) getDenomAddressPrefixStore(ctx sdk.Context, denom string
 
 // UnmarshalBalanceCompat unmarshal balance amount from storage, it's backward-compatible with the legacy format.
 func UnmarshalBalanceCompat(cdc codec.BinaryCodec, bz []byte, denom string) (sdk.Coin, error) {
+	if err := sdk.ValidateDenom(denom); err != nil {
+		return sdk.Coin{}, err
+	}
+
 	amount := math.ZeroInt()
 	if bz == nil {
 		return sdk.NewCoin(denom, amount), nil

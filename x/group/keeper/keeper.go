@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/cometbft/cometbft/libs/log"
+
+	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/group"
@@ -382,7 +383,6 @@ func (k Keeper) PruneProposals(ctx sdk.Context) error {
 // TallyProposalsAtVPEnd iterates over all proposals whose voting period
 // has ended, tallies their votes, prunes them, and updates the proposal's
 // `FinalTallyResult` field.
-
 func (k Keeper) TallyProposalsAtVPEnd(ctx sdk.Context) error {
 	proposals, err := k.proposalsByVPEnd(ctx, ctx.BlockTime())
 	if err != nil {
@@ -408,9 +408,8 @@ func (k Keeper) TallyProposalsAtVPEnd(ctx sdk.Context) error {
 			if err := k.pruneVotes(ctx, proposalID); err != nil {
 				return err
 			}
-		} else {
-			err = k.doTallyAndUpdate(ctx, &proposal, electorate, policyInfo)
-			if err != nil {
+		} else if proposal.Status == group.PROPOSAL_STATUS_SUBMITTED {
+			if err := k.doTallyAndUpdate(ctx, &proposal, electorate, policyInfo); err != nil {
 				return sdkerrors.Wrap(err, "doTallyAndUpdate")
 			}
 
@@ -418,6 +417,8 @@ func (k Keeper) TallyProposalsAtVPEnd(ctx sdk.Context) error {
 				return sdkerrors.Wrap(err, "proposal update")
 			}
 		}
+		// Note: We do nothing if the proposal has been marked as ACCEPTED or
+		// REJECTED.
 	}
 	return nil
 }

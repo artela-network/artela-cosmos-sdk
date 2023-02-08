@@ -4,13 +4,15 @@ import (
 	"testing"
 	"time"
 
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmttime "github.com/cometbft/cometbft/types/time"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtime "github.com/tendermint/tendermint/types/time"
+
+	storetypes "cosmossdk.io/store/types"
+	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +22,6 @@ import (
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	authztestutil "github.com/cosmos/cosmos-sdk/x/authz/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
@@ -33,21 +34,21 @@ var (
 type TestSuite struct {
 	suite.Suite
 
-	ctx               sdk.Context
-	addrs             []sdk.AccAddress
-	authzKeeper       authzkeeper.Keeper
-	accountKeeper     *authztestutil.MockAccountKeeper
-	bankKeeper        *authztestutil.MockBankKeeper
-	interfaceRegistry codectypes.InterfaceRegistry
-	baseApp           *baseapp.BaseApp
-	encCfg            moduletestutil.TestEncodingConfig
-	queryClient       authz.QueryClient
+	ctx           sdk.Context
+	addrs         []sdk.AccAddress
+	authzKeeper   authzkeeper.Keeper
+	accountKeeper *authztestutil.MockAccountKeeper
+	bankKeeper    *authztestutil.MockBankKeeper
+	baseApp       *baseapp.BaseApp
+	encCfg        moduletestutil.TestEncodingConfig
+	queryClient   authz.QueryClient
+	msgSrvr       authz.MsgServer
 }
 
 func (s *TestSuite) SetupTest() {
-	key := sdk.NewKVStoreKey(authzkeeper.StoreKey)
-	testCtx := testutil.DefaultContextWithDB(s.T(), key, sdk.NewTransientStoreKey("transient_test"))
-	s.ctx = testCtx.Ctx.WithBlockHeader(tmproto.Header{Time: tmtime.Now()})
+	key := storetypes.NewKVStoreKey(authzkeeper.StoreKey)
+	testCtx := testutil.DefaultContextWithDB(s.T(), key, storetypes.NewTransientStoreKey("transient_test"))
+	s.ctx = testCtx.Ctx.WithBlockHeader(cmtproto.Header{Time: cmttime.Now()})
 	s.encCfg = moduletestutil.MakeTestEncodingConfig(authzmodule.AppModuleBasic{})
 
 	s.baseApp = baseapp.NewBaseApp(
@@ -75,7 +76,7 @@ func (s *TestSuite) SetupTest() {
 	queryClient := authz.NewQueryClient(queryHelper)
 	s.queryClient = queryClient
 
-	s.queryClient = queryClient
+	s.msgSrvr = s.authzKeeper
 }
 
 func (s *TestSuite) TestKeeper() {

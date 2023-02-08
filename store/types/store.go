@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 
-	abci "github.com/tendermint/tendermint/abci/types"
-	dbm "github.com/tendermint/tm-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	dbm "github.com/cosmos/cosmos-db"
 
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
-	"github.com/cosmos/cosmos-sdk/types/kv"
+	"cosmossdk.io/store/metrics"
+	pruningtypes "cosmossdk.io/store/pruning/types"
+	snapshottypes "cosmossdk.io/store/snapshots/types"
 )
 
 type Store interface {
@@ -128,13 +128,6 @@ type MultiStore interface {
 	// tracing operations. The modified MultiStore is returned.
 	SetTracingContext(TraceContext) MultiStore
 
-	// ListeningEnabled returns if listening is enabled for the KVStore belonging the provided StoreKey
-	ListeningEnabled(key StoreKey) bool
-
-	// AddListeners adds WriteListeners for the KVStore belonging to the provided StoreKey
-	// It appends the listeners to a current set, if one already exists
-	AddListeners(key StoreKey, listeners []WriteListener)
-
 	// LatestVersion returns the latest version in the store
 	LatestVersion() int64
 }
@@ -195,8 +188,21 @@ type CommitMultiStore interface {
 	// SetIAVLDisableFastNode enables/disables fastnode feature on iavl.
 	SetIAVLDisableFastNode(disable bool)
 
+	// SetIAVLLazyLoading enable/disable lazy loading on iavl.
+	SetLazyLoading(lazyLoading bool)
+
 	// RollbackToVersion rollback the db to specific version(height).
 	RollbackToVersion(version int64) error
+
+	// ListeningEnabled returns if listening is enabled for the KVStore belonging the provided StoreKey
+	ListeningEnabled(key StoreKey) bool
+
+	// AddListeners adds WriteListeners for the KVStore belonging to the provided StoreKey
+	// It appends the listeners to a current set, if one already exists
+	AddListeners(key StoreKey, listeners []WriteListener)
+
+	// SetMetrics sets the metrics for the KVStore
+	SetMetrics(metrics metrics.StoreMetrics)
 }
 
 //---------subsp-------------------------------
@@ -273,9 +279,6 @@ type CacheWrap interface {
 
 	// CacheWrapWithTrace recursively wraps again with tracing enabled.
 	CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap
-
-	// CacheWrapWithListeners recursively wraps again with listening enabled
-	CacheWrapWithListeners(storeKey StoreKey, listeners []WriteListener) CacheWrap
 }
 
 type CacheWrapper interface {
@@ -284,9 +287,6 @@ type CacheWrapper interface {
 
 	// CacheWrapWithTrace branches a store with tracing enabled.
 	CacheWrapWithTrace(w io.Writer, tc TraceContext) CacheWrap
-
-	// CacheWrapWithListeners recursively wraps again with listening enabled
-	CacheWrapWithListeners(storeKey StoreKey, listeners []WriteListener) CacheWrap
 }
 
 func (cid CommitID) IsZero() bool {
@@ -370,6 +370,19 @@ func NewKVStoreKey(name string) *KVStoreKey {
 	}
 }
 
+// NewKVStoreKeys returns a map of new  pointers to KVStoreKey's.
+// The function will panic if there is a potential conflict in names (see `assertNoPrefix`
+// function for more details).
+func NewKVStoreKeys(names ...string) map[string]*KVStoreKey {
+	assertNoCommonPrefix(names)
+	keys := make(map[string]*KVStoreKey, len(names))
+	for _, n := range names {
+		keys[n] = NewKVStoreKey(n)
+	}
+
+	return keys
+}
+
 func (key *KVStoreKey) Name() string {
 	return key.name
 }
@@ -422,11 +435,6 @@ func (key *MemoryStoreKey) String() string {
 
 //----------------------------------------
 
-// key-value result for iterator queries
-type KVPair kv.Pair
-
-//----------------------------------------
-
 // TraceContext contains TraceKVStore context data. It will be written with
 // every trace operation.
 type TraceContext map[string]interface{}
@@ -474,4 +482,32 @@ type StoreWithInitialVersion interface {
 	// SetInitialVersion sets the initial version of the IAVL tree. It is used when
 	// starting a new chain at an arbitrary height.
 	SetInitialVersion(version int64)
+}
+
+// NewTransientStoreKeys constructs a new map of TransientStoreKey's
+// Must return pointers according to the ocap principle
+// The function will panic if there is a potential conflict in names
+// see `assertNoCommonPrefix` function for more details.
+func NewTransientStoreKeys(names ...string) map[string]*TransientStoreKey {
+	assertNoCommonPrefix(names)
+	keys := make(map[string]*TransientStoreKey)
+	for _, n := range names {
+		keys[n] = NewTransientStoreKey(n)
+	}
+
+	return keys
+}
+
+// NewMemoryStoreKeys constructs a new map matching store key names to their
+// respective MemoryStoreKey references.
+// The function will panic if there is a potential conflict in names (see `assertNoPrefix`
+// function for more details).
+func NewMemoryStoreKeys(names ...string) map[string]*MemoryStoreKey {
+	assertNoCommonPrefix(names)
+	keys := make(map[string]*MemoryStoreKey)
+	for _, n := range names {
+		keys[n] = NewMemoryStoreKey(n)
+	}
+
+	return keys
 }

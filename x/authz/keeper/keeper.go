@@ -5,14 +5,15 @@ import (
 	"strconv"
 	"time"
 
+	"cosmossdk.io/log"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/gogoproto/proto"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
+
+	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/authz"
@@ -177,11 +178,13 @@ func (k Keeper) SaveGrant(ctx sdk.Context, grantee, granter sdk.AccAddress, auth
 	if oldGrant, found := k.getGrant(ctx, skey); found {
 		oldExp = oldGrant.Expiration
 	}
+
 	if oldExp != nil && (expiration == nil || !oldExp.Equal(*expiration)) {
 		if err = k.removeFromGrantQueue(ctx, skey, granter, grantee, *oldExp); err != nil {
 			return err
 		}
 	}
+
 	// If the expiration didn't change, then we don't remove it and we should not insert again
 	if expiration != nil && (oldExp == nil || !oldExp.Equal(*expiration)) {
 		if err = k.insertIntoGrantQueue(ctx, granter, grantee, msgType, *expiration); err != nil {
@@ -229,7 +232,7 @@ func (k Keeper) DeleteGrant(ctx sdk.Context, grantee sdk.AccAddress, granter sdk
 func (k Keeper) GetAuthorizations(ctx sdk.Context, grantee sdk.AccAddress, granter sdk.AccAddress) ([]authz.Authorization, error) {
 	store := ctx.KVStore(k.storeKey)
 	key := grantStoreKey(grantee, granter, "")
-	iter := sdk.KVStorePrefixIterator(store, key)
+	iter := storetypes.KVStorePrefixIterator(store, key)
 	defer iter.Close()
 
 	var authorization authz.Grant
@@ -277,7 +280,7 @@ func (k Keeper) IterateGrants(ctx sdk.Context,
 	handler func(granterAddr sdk.AccAddress, granteeAddr sdk.AccAddress, grant authz.Grant) bool,
 ) {
 	store := ctx.KVStore(k.storeKey)
-	iter := sdk.KVStorePrefixIterator(store, GrantKey)
+	iter := storetypes.KVStorePrefixIterator(store, GrantKey)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var grant authz.Grant
@@ -376,7 +379,7 @@ func (k Keeper) removeFromGrantQueue(ctx sdk.Context, grantKey []byte, granter, 
 func (k Keeper) DequeueAndDeleteExpiredGrants(ctx sdk.Context) error {
 	store := ctx.KVStore(k.storeKey)
 
-	iterator := store.Iterator(GrantQueuePrefix, sdk.InclusiveEndBytes(GrantQueueTimePrefix(ctx.BlockTime())))
+	iterator := store.Iterator(GrantQueuePrefix, storetypes.InclusiveEndBytes(GrantQueueTimePrefix(ctx.BlockTime())))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {

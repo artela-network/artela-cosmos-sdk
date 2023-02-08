@@ -3,11 +3,11 @@ package keeper
 import (
 	"fmt"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
+	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -49,7 +49,7 @@ func NewKeeper(
 
 	// ensure that authority is a valid AccAddress
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
-		panic(("authority is not a valid acc address"))
+		panic("authority is not a valid acc address")
 	}
 
 	return &Keeper{
@@ -68,16 +68,17 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // Hooks gets the hooks for staking *Keeper {
-func (keeper *Keeper) Hooks() types.StakingHooks {
-	if keeper.hooks == nil {
+func (k *Keeper) Hooks() types.StakingHooks {
+	if k.hooks == nil {
 		// return a no-op implementation if no hooks are set
 		return types.MultiStakingHooks{}
 	}
 
-	return keeper.hooks
+	return k.hooks
 }
 
-// SetHooks Set the validator hooks
+// SetHooks Set the validator hooks.  In contrast to other receivers, this method must take a pointer due to nature
+// of the hooks interface and SDK start up sequence.
 func (k *Keeper) SetHooks(sh types.StakingHooks) {
 	if k.hooks != nil {
 		panic("cannot set validator hooks twice")

@@ -8,9 +8,8 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmprotocrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
-	"sigs.k8s.io/yaml"
+	abci "github.com/cometbft/cometbft/abci/types"
+	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -61,21 +60,6 @@ func NewValidator(operator sdk.ValAddress, pubKey cryptotypes.PubKey, descriptio
 		MinSelfDelegation:       math.OneInt(),
 		UnbondingOnHoldRefCount: 0,
 	}, nil
-}
-
-// String implements the Stringer interface for a Validator object.
-func (v Validator) String() string {
-	bz, err := codec.ProtoMarshalJSON(&v, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	out, err := yaml.JSONToYAML(bz)
-	if err != nil {
-		panic(err)
-	}
-
-	return string(out)
 }
 
 // Validators is a collection of Validator
@@ -200,12 +184,6 @@ func NewDescription(moniker, identity, website, securityContact, details string)
 		SecurityContact: securityContact,
 		Details:         details,
 	}
-}
-
-// String implements the Stringer interface for a Description object.
-func (d Description) String() string {
-	out, _ := yaml.Marshal(d)
-	return string(out)
 }
 
 // UpdateDescription updates the fields of a given description. An error is
@@ -489,16 +467,16 @@ func (v Validator) ConsPubKey() (cryptotypes.PubKey, error) {
 	return pk, nil
 }
 
-// TmConsPublicKey casts Validator.ConsensusPubkey to tmprotocrypto.PubKey.
-func (v Validator) TmConsPublicKey() (tmprotocrypto.PublicKey, error) {
+// TmConsPublicKey casts Validator.ConsensusPubkey to cmtprotocrypto.PubKey.
+func (v Validator) TmConsPublicKey() (cmtprotocrypto.PublicKey, error) {
 	pk, err := v.ConsPubKey()
 	if err != nil {
-		return tmprotocrypto.PublicKey{}, err
+		return cmtprotocrypto.PublicKey{}, err
 	}
 
 	tmPk, err := cryptocodec.ToTmProtoPublicKey(pk)
 	if err != nil {
-		return tmprotocrypto.PublicKey{}, err
+		return cmtprotocrypto.PublicKey{}, err
 	}
 
 	return tmPk, nil

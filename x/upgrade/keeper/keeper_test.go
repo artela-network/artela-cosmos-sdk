@@ -5,9 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/libs/log"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	storetypes "cosmossdk.io/store/types"
+	"cosmossdk.io/x/upgrade"
+	"cosmossdk.io/x/upgrade/keeper"
+	"cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -17,16 +22,14 @@ import (
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/upgrade"
-	"github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
-	"github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 type KeeperTestSuite struct {
 	suite.Suite
 
+	key           *storetypes.KVStoreKey
 	baseApp       *baseapp.BaseApp
-	upgradeKeeper keeper.Keeper
+	upgradeKeeper *keeper.Keeper
 	homeDir       string
 	ctx           sdk.Context
 	msgSrvr       types.MsgServer
@@ -36,8 +39,9 @@ type KeeperTestSuite struct {
 
 func (s *KeeperTestSuite) SetupTest() {
 	s.encCfg = moduletestutil.MakeTestEncodingConfig(upgrade.AppModuleBasic{})
-	key := sdk.NewKVStoreKey(types.StoreKey)
-	testCtx := testutil.DefaultContextWithDB(s.T(), key, sdk.NewTransientStoreKey("transient_test"))
+	key := storetypes.NewKVStoreKey(types.StoreKey)
+	s.key = key
+	testCtx := testutil.DefaultContextWithDB(s.T(), key, storetypes.NewTransientStoreKey("transient_test"))
 
 	s.baseApp = baseapp.NewBaseApp(
 		"upgrade",
@@ -52,9 +56,13 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.upgradeKeeper = keeper.NewKeeper(skipUpgradeHeights, key, s.encCfg.Codec, homeDir, nil, authtypes.NewModuleAddress(govtypes.ModuleName).String())
 	s.upgradeKeeper.SetVersionSetter(s.baseApp)
 
+	vs := s.upgradeKeeper.GetVersionSetter()
+	s.Require().Equal(vs, s.baseApp)
+
+	s.Require().Equal(testCtx.Ctx.Logger().With("module", "x/"+types.ModuleName), s.upgradeKeeper.Logger(testCtx.Ctx))
 	s.T().Log("home dir:", homeDir)
 	s.homeDir = homeDir
-	s.ctx = testCtx.Ctx.WithBlockHeader(tmproto.Header{Time: time.Now(), Height: 10})
+	s.ctx = testCtx.Ctx.WithBlockHeader(cmtproto.Header{Time: time.Now(), Height: 10})
 
 	s.msgSrvr = keeper.NewMsgServerImpl(s.upgradeKeeper)
 	s.addrs = simtestutil.CreateIncrementalAccounts(1)
@@ -215,16 +223,49 @@ func (s *KeeperTestSuite) TestSetUpgradedClient() {
 	}
 }
 
+func (s *KeeperTestSuite) TestIsSkipHeight() {
+	var skipOne int64 = 9
+	ok := s.upgradeKeeper.IsSkipHeight(11)
+	s.Require().False(ok)
+	skip := map[int64]bool{skipOne: true}
+	upgradeKeeper := keeper.NewKeeper(skip, s.key, s.encCfg.Codec, s.T().TempDir(), nil, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	upgradeKeeper.SetVersionSetter(s.baseApp)
+	s.Require().True(upgradeKeeper.IsSkipHeight(9))
+	s.Require().False(upgradeKeeper.IsSkipHeight(10))
+}
+
+func (s *KeeperTestSuite) TestUpgradedConsensusState() {
+	cs := []byte("IBC consensus state")
+	s.Require().NoError(s.upgradeKeeper.SetUpgradedConsensusState(s.ctx, 10, cs))
+	bz, ok := s.upgradeKeeper.GetUpgradedConsensusState(s.ctx, 10)
+	s.Require().True(ok)
+	s.Require().Equal(cs, bz)
+}
+
+func (s *KeeperTestSuite) TestDowngradeVerified() {
+	s.upgradeKeeper.SetDowngradeVerified(true)
+	ok := s.upgradeKeeper.DowngradeVerified()
+	s.Require().True(ok)
+}
+
 // Test that the protocol version successfully increments after an
 // upgrade and is successfully set on BaseApp's appVersion.
 func (s *KeeperTestSuite) TestIncrementProtocolVersion() {
 	oldProtocolVersion := s.baseApp.AppVersion()
-	s.upgradeKeeper.SetUpgradeHandler("dummy", func(_ sdk.Context, _ types.Plan, vm module.VersionMap) (module.VersionMap, error) { return vm, nil })
+	res := s.upgradeKeeper.HasHandler("dummy")
+	s.Require().False(res)
 	dummyPlan := types.Plan{
 		Name:   "dummy",
 		Info:   "some text here",
 		Height: 100,
 	}
+	s.Require().PanicsWithValue("ApplyUpgrade should never be called without first checking HasHandler",
+		func() {
+			s.upgradeKeeper.ApplyUpgrade(s.ctx, dummyPlan)
+		},
+	)
+
+	s.upgradeKeeper.SetUpgradeHandler("dummy", func(_ sdk.Context, _ types.Plan, vm module.VersionMap) (module.VersionMap, error) { return vm, nil })
 	s.upgradeKeeper.ApplyUpgrade(s.ctx, dummyPlan)
 	upgradedProtocolVersion := s.baseApp.AppVersion()
 
@@ -239,7 +280,7 @@ func (s *KeeperTestSuite) TestMigrations() {
 	vmBefore := s.upgradeKeeper.GetModuleVersionMap(s.ctx)
 	s.upgradeKeeper.SetUpgradeHandler("dummy", func(_ sdk.Context, _ types.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		// simulate upgrading the bank module
-		vm["bank"] = vm["bank"] + 1
+		vm["bank"] = vm["bank"] + 1 //nolint:gocritic
 		return vm, nil
 	})
 	dummyPlan := types.Plan{

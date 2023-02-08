@@ -28,7 +28,7 @@ func TestDec(t *testing.T) {
 	t.Run("TestSubAdd", rapid.MakeCheck(testSubAdd))
 	t.Run("TestAddSub", rapid.MakeCheck(testAddSub))
 
-	// Properties about comparision and equality
+	// Properties about comparison and equality
 	t.Run("TestCmpInverse", rapid.MakeCheck(testCmpInverse))
 	t.Run("TestEqualCommutative", rapid.MakeCheck(testEqualCommutative))
 
@@ -54,33 +54,41 @@ func TestDec(t *testing.T) {
 	require.NoError(t, err)
 	minusFivePointZero, err := NewDecFromString("-5.0")
 	require.NoError(t, err)
+	_, err = NewDecFromString("inf")
+	require.Error(t, err)
+	_, err = NewDecFromString("Infinite")
+	require.Error(t, err)
+	_, err = NewDecFromString("foo")
+	require.Error(t, err)
+	_, err = NewDecFromString("NaN")
+	require.Error(t, err)
 
 	res, err := two.Add(zero)
 	require.NoError(t, err)
-	require.True(t, res.IsEqual(two))
+	require.True(t, res.Equal(two))
 
 	res, err = five.Sub(two)
 	require.NoError(t, err)
-	require.True(t, res.IsEqual(three))
+	require.True(t, res.Equal(three))
 
 	res, err = onePointOneFive.Add(twoPointThreeFour)
 	require.NoError(t, err)
-	require.True(t, res.IsEqual(threePointFourNine))
+	require.True(t, res.Equal(threePointFourNine))
 
 	res, err = threePointFourNine.Sub(two)
 	require.NoError(t, err)
-	require.True(t, res.IsEqual(onePointFourNine))
+	require.True(t, res.Equal(onePointFourNine))
 
 	res, err = minusOne.Sub(four)
 	require.NoError(t, err)
-	require.True(t, res.IsEqual(minusFivePointZero))
+	require.True(t, res.Equal(minusFivePointZero))
 
 	_, err = four.Quo(zero)
 	require.Error(t, err)
 
 	res, err = four.Quo(two)
 	require.NoError(t, err)
-	require.True(t, res.IsEqual(two))
+	require.True(t, res.Equal(two))
 
 	require.False(t, zero.IsNegative())
 	require.False(t, one.IsNegative())
@@ -125,7 +133,7 @@ func testAddLeftIdentity(t *rapid.T) {
 	b, err := zero.Add(a)
 	require.NoError(t, err)
 
-	require.True(t, a.IsEqual(b))
+	require.True(t, a.Equal(b))
 }
 
 // Property: a + 0 == a
@@ -136,7 +144,7 @@ func testAddRightIdentity(t *rapid.T) {
 	b, err := a.Add(zero)
 	require.NoError(t, err)
 
-	require.True(t, a.IsEqual(b))
+	require.True(t, a.Equal(b))
 }
 
 // Property: a + b == b + a
@@ -150,7 +158,7 @@ func testAddCommutative(t *rapid.T) {
 	d, err := b.Add(a)
 	require.NoError(t, err)
 
-	require.True(t, c.IsEqual(d))
+	require.True(t, c.Equal(d))
 }
 
 // Property: (a + b) + c == a + (b + c)
@@ -173,7 +181,7 @@ func testAddAssociative(t *rapid.T) {
 	g, err := a.Add(f)
 	require.NoError(t, err)
 
-	require.True(t, e.IsEqual(g))
+	require.True(t, e.Equal(g))
 }
 
 // Property: a - 0 == a
@@ -184,7 +192,7 @@ func testSubRightIdentity(t *rapid.T) {
 	b, err := a.Sub(zero)
 	require.NoError(t, err)
 
-	require.True(t, a.IsEqual(b))
+	require.True(t, a.Equal(b))
 }
 
 // Property: a - a == 0
@@ -195,7 +203,7 @@ func testSubZero(t *rapid.T) {
 	b, err := a.Sub(a)
 	require.NoError(t, err)
 
-	require.True(t, b.IsEqual(zero))
+	require.True(t, b.Equal(zero))
 }
 
 // Property: (a - b) + b == a
@@ -209,7 +217,7 @@ func testSubAdd(t *rapid.T) {
 	d, err := c.Add(b)
 	require.NoError(t, err)
 
-	require.True(t, a.IsEqual(d))
+	require.True(t, a.Equal(d))
 }
 
 // Property: (a + b) - b == a
@@ -223,7 +231,7 @@ func testAddSub(t *rapid.T) {
 	d, err := c.Sub(b)
 	require.NoError(t, err)
 
-	require.True(t, a.IsEqual(d))
+	require.True(t, a.Equal(d))
 }
 
 // Property: Cmp(a, b) == -Cmp(b, a)
@@ -234,12 +242,12 @@ func testCmpInverse(t *rapid.T) {
 	require.Equal(t, a.Cmp(b), -b.Cmp(a))
 }
 
-// Property: IsEqual(a, b) == IsEqual(b, a)
+// Property: Equal(a, b) == Equal(b, a)
 func testEqualCommutative(t *rapid.T) {
 	a := genDec.Draw(t, "a")
 	b := genDec.Draw(t, "b")
 
-	require.Equal(t, a.IsEqual(b), b.IsEqual(a))
+	require.Equal(t, a.Equal(b), b.Equal(a))
 }
 
 // Property: isNegative(f) == isNegative(NewDecFromString(f.String()))
@@ -250,7 +258,7 @@ func testIsNegative(t *rapid.T) {
 	require.Equal(t, f < 0, dec.IsNegative())
 }
 
-func floatDecimalPlaces(t *rapid.T, f float64) uint32 {
+func floatDecimalPlaces(t *rapid.T, f float64) uint32 { //nolint:unused
 	reScientific := regexp.MustCompile(`^\-?(?:[[:digit:]]+(?:\.([[:digit:]]+))?|\.([[:digit:]]+))(?:e?(?:\+?([[:digit:]]+)|(-[[:digit:]]+)))?$`)
 	fStr := fmt.Sprintf("%g", f)
 	matches := reScientific.FindAllStringSubmatch(fStr, 1)
@@ -283,7 +291,7 @@ func floatDecimalPlaces(t *rapid.T, f float64) uint32 {
 	// Subtract exponent from base and check if negative
 	if res := basePlaces - exp; res <= 0 {
 		return 0
-	} else {
+	} else { //nolint:revive
 		return uint32(res)
 	}
 }

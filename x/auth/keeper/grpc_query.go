@@ -6,7 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
+
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"google.golang.org/grpc/codes"
@@ -24,12 +25,14 @@ func (ak AccountKeeper) AccountAddressByID(c context.Context, req *types.QueryAc
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 
-	if req.Id < 0 {
-		return nil, status.Error(codes.InvalidArgument, "invalid account number")
+	if req.Id != 0 { // ignoring `0` case since it is default value.
+		return nil, status.Error(codes.InvalidArgument, "requesting with id isn't supported, try to request using account-id")
 	}
 
+	accID := req.AccountId
+
 	ctx := sdk.UnwrapSDKContext(c)
-	address := ak.GetAccountAddressByID(ctx, uint64(req.GetId()))
+	address := ak.GetAccountAddressByID(ctx, accID)
 	if len(address) == 0 {
 		return nil, status.Errorf(codes.NotFound, "account address not found with account number %d", req.Id)
 	}

@@ -20,9 +20,28 @@ func TestMigrateJSON(t *testing.T) {
 		WithCodec(encodingConfig.Codec)
 
 	govGenState := v1.DefaultGenesisState()
+	oldGovState := &v1.GenesisState{
+		StartingProposalId: govGenState.StartingProposalId,
+		Deposits:           govGenState.Deposits,
+		Votes:              govGenState.Votes,
+		Proposals:          govGenState.Proposals,
+		DepositParams: &v1.DepositParams{
+			MinDeposit:       govGenState.Params.MinDeposit,
+			MaxDepositPeriod: govGenState.Params.MaxDepositPeriod,
+		},
+		VotingParams: &v1.VotingParams{
+			VotingPeriod: govGenState.Params.VotingPeriod,
+		},
+		TallyParams: &v1.TallyParams{
+			Quorum:        govGenState.Params.Quorum,
+			Threshold:     govGenState.Params.Threshold,
+			VetoThreshold: govGenState.Params.VetoThreshold,
+		},
+	}
 
-	migrated, err := v4.MigrateJSON(govGenState)
+	migrated, err := v4.MigrateJSON(oldGovState)
 	require.NoError(t, err)
+	require.Equal(t, migrated, govGenState)
 
 	bz, err := clientCtx.Codec.MarshalJSON(migrated)
 	require.NoError(t, err)
@@ -40,6 +59,14 @@ func TestMigrateJSON(t *testing.T) {
 	"deposit_params": null,
 	"deposits": [],
 	"params": {
+		"expedited_min_deposit": [
+			{
+				"amount": "50000000",
+				"denom": "stake"
+			}
+		],
+		"expedited_threshold": "0.667000000000000000",
+		"expedited_voting_period": "86400s",
 		"max_deposit_period": "172800s",
 		"min_deposit": [
 			{
@@ -48,6 +75,8 @@ func TestMigrateJSON(t *testing.T) {
 			}
 		],
 		"min_initial_deposit_ratio": "0.000000000000000000",
+		"proposal_cancel_dest": "",
+		"proposal_cancel_ratio": "0.500000000000000000",
 		"quorum": "0.334000000000000000",
 		"threshold": "0.500000000000000000",
 		"veto_threshold": "0.334000000000000000",

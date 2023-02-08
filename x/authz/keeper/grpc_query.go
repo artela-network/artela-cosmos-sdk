@@ -6,8 +6,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"cosmossdk.io/store/prefix"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -16,7 +17,7 @@ import (
 
 var _ authz.QueryServer = Keeper{}
 
-// Authorizations implements the Query/Grants gRPC method.
+// Grants implements the Query/Grants gRPC method.
 // It returns grants for a granter-grantee pair. If msg type URL is set, it returns grants only for that msg type.
 func (k Keeper) Grants(c context.Context, req *authz.QueryGrantsRequest) (*authz.QueryGrantsResponse, error) {
 	if req == nil {

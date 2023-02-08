@@ -3,15 +3,14 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-)
-
-const (
-	TypeMsgVerifyInvariant = "verify_invariant"
-	TypeMsgUpdateParams    = "update_params"
+	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
 // ensure Msg interface compliance at compile time
-var _, _ sdk.Msg = &MsgVerifyInvariant{}, &MsgUpdateParams{}
+var (
+	_, _ sdk.Msg            = &MsgVerifyInvariant{}, &MsgUpdateParams{}
+	_, _ legacytx.LegacyMsg = &MsgVerifyInvariant{}, &MsgUpdateParams{}
+)
 
 // NewMsgVerifyInvariant creates a new MsgVerifyInvariant object
 //
@@ -23,9 +22,6 @@ func NewMsgVerifyInvariant(sender sdk.AccAddress, invModeName, invRoute string) 
 		InvariantRoute:      invRoute,
 	}
 }
-
-func (msg MsgVerifyInvariant) Route() string { return ModuleName }
-func (msg MsgVerifyInvariant) Type() string  { return TypeMsgVerifyInvariant }
 
 // get the bytes for the message signer to sign on
 func (msg MsgVerifyInvariant) GetSigners() []sdk.AccAddress {
@@ -51,9 +47,6 @@ func (msg MsgVerifyInvariant) ValidateBasic() error {
 func (msg MsgVerifyInvariant) FullInvariantRoute() string {
 	return msg.InvariantModuleName + "/" + msg.InvariantRoute
 }
-
-func (msg MsgUpdateParams) Route() string { return ModuleName }
-func (msg MsgUpdateParams) Type() string  { return TypeMsgUpdateParams }
 
 // GetSigners returns the signer addresses that are expected to sign the result
 // of GetSignBytes.

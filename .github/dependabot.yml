@@ -11,7 +11,10 @@ updates:
   - package-ecosystem: npm
     directory: "/docs"
     schedule:
-      interval: daily
+      interval: weekly
+    # DevRel should review docs updates
+    assignees:
+      - "julienrbrt"
 
   - package-ecosystem: gomod
     directory: "/"
@@ -56,13 +59,6 @@ updates:
       - "A:automerge"
       - dependencies
   - package-ecosystem: gomod
-    directory: "/tools/cosmovisor"
-    schedule:
-      interval: weekly
-    labels:
-      - "A:automerge"
-      - dependencies
-  - package-ecosystem: gomod
     directory: "/depinject"
     schedule:
       interval: weekly
@@ -91,7 +87,93 @@ updates:
       - "A:automerge"
       - dependencies
   - package-ecosystem: gomod
-    directory: "/tx"
+    directory: "/x/tx"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+  - package-ecosystem: gomod
+    directory: "/tools/cosmovisor"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+  - package-ecosystem: gomod
+    directory: "/tools/rosetta"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+  - package-ecosystem: gomod
+    directory: "/tools/confix"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+  - package-ecosystem: gomod
+    directory: "/tools/hubl"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+  - package-ecosystem: gomod
+    directory: "/collections"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+  - package-ecosystem: gomod
+    directory: "/x/nft"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+  - package-ecosystem: gomod
+    directory: "/x/circuit"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+
+  - package-ecosystem: gomod
+    directory: "x/feegrant"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+
+  - package-ecosystem: gomod
+    directory: "/x/evidence"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+  - package-ecosystem: gomod
+    directory: "/store"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+  - package-ecosystem: gomod
+    directory: "x/upgrade"
+    schedule:
+      interval: weekly
+    labels:
+      - "A:automerge"
+      - dependencies
+  - package-ecosystem: gomod
+    directory: "log"
     schedule:
       interval: weekly
     labels:

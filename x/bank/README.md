@@ -131,7 +131,7 @@ it can be updated with governance or the address with authority.
 * Params: `0x05 | ProtocolBuffer(Params)`
 
 ```protobuf reference
-https://github.com/cosmos/cosmos-sdk/blob/v0.46.0-rc3/proto/cosmos/bank/v1beta1/bank.proto#L11-L16
+https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/proto/cosmos/bank/v1beta1/bank.proto#L12-L23
 ```
 
 ## Keepers
@@ -286,7 +286,7 @@ type ViewKeeper interface {
 Send coins from one address to another.
 
 ```protobuf reference
-https://github.com/cosmos/cosmos-sdk/blob/v0.46.0/proto/cosmos/bank/v1beta1/tx.proto#L21-L32
+https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/proto/cosmos/bank/v1beta1/tx.proto#L38-L53
 ```
 
 The message will fail under the following conditions:
@@ -296,10 +296,10 @@ The message will fail under the following conditions:
 
 ### MsgMultiSend
 
-Send coins from and to a series of different address. If any of the receiving addresses do not correspond to an existing account, a new account is created.
+Send coins from one sender and to a series of different address. If any of the receiving addresses do not correspond to an existing account, a new account is created.
 
 ```protobuf reference
-https://github.com/cosmos/cosmos-sdk/blob/v0.46.0/proto/cosmos/bank/v1beta1/tx.proto#L37-L45
+https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/proto/cosmos/bank/v1beta1/tx.proto#L58-L69
 ```
 
 The message will fail under the following conditions:
@@ -314,7 +314,7 @@ The message will fail under the following conditions:
 The `bank` module params can be updated through `MsgUpdateParams`, which can be done using governance proposal. The signer will always be the `gov` module account address. 
 
 ```protobuf reference
-https://github.com/cosmos/cosmos-sdk/blob/e167855c9b99c4e58c1455533c6f88af5ff78ae1/proto/cosmos/bank/v1beta1/tx.proto#L56-L69
+https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/proto/cosmos/bank/v1beta1/tx.proto#L74-L88
 ```
 
 The message handling can fail if:
@@ -326,7 +326,7 @@ The message handling can fail if:
 Used with the x/gov module to set create/edit SendEnabled entries.
 
 ```protobuf reference
-https://github.com/cosmos/cosmos-sdk/blob/1bb627e7324278218560d2dd61e010881394f504/proto/cosmos/bank/v1beta1/tx.proto#L94-L107
+https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/proto/cosmos/bank/v1beta1/tx.proto#L96-L117
 ```
 
 The message will fail under the following conditions:
@@ -504,7 +504,7 @@ parameters.
 
 A user can query and interact with the `bank` module using the CLI.
 
-### Query
+#### Query
 
 The `query` commands allow users to query `bank` state.
 
@@ -512,7 +512,7 @@ The `query` commands allow users to query `bank` state.
 simd query bank --help
 ```
 
-#### balances
+##### balances
 
 The `balances` command allows users to query account balances by address.
 
@@ -537,7 +537,7 @@ pagination:
   total: "0"
 ```
 
-#### denom-metadata
+##### denom-metadata
 
 The `denom-metadata` command allows users to query metadata for coin denominations. A user can query metadata for a single denomination using the `--denom` flag or all denominations without it.
 
@@ -566,7 +566,7 @@ metadata:
   symbol: STK
 ```
 
-#### total
+##### total
 
 The `total` command allows users to query the total supply of coins. A user can query the total supply for a single coin using the `--denom` flag or all coins without it.
 
@@ -587,7 +587,7 @@ amount: "10000000000"
 denom: stake
 ```
 
-#### send-enabled
+##### send-enabled
 
 The `send-enabled` command allows users to query for all or some SendEnabled entries.
 
@@ -613,7 +613,7 @@ pagination:
   total: 2 
 ```
 
-### Transactions
+#### Transactions
 
 The `tx` commands allow users to interact with the `bank` module.
 
@@ -621,7 +621,7 @@ The `tx` commands allow users to interact with the `bank` module.
 simd tx bank --help
 ```
 
-#### send
+##### send
 
 The `send` command allows users to send funds from one account to another.
 

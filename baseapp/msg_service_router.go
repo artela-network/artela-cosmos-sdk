@@ -138,7 +138,7 @@ func (msr *MsgServiceRouter) RegisterService(sd *grpc.ServiceDesc, handler inter
 
 			// Call the method handler from the service description with the handler object.
 			// We don't do any decoding here because the decoding was already done.
-			return methodHandler(handler, sdk.WrapSDKContext(ctx), noopDecoder, interceptor)
+			return methodHandler(handler, ctx, noopDecoder, interceptor)
 		}
 		// we index via type name, type URL and method name for inter-module calls
 		msr.routes[requestTypeName] = handler

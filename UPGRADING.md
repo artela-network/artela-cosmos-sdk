@@ -4,9 +4,119 @@ This guide provides instructions for upgrading to specific versions of Cosmos SD
 
 ## [Unreleased]
 
+### Consensus Engine
+
+The Cosmos SDK has migrated to CometBFT as its default consensus engine.
+This is a breaking changes that needs chains to re-generate their protos.
+Some functions has been renamed to reflect the naming change, following an exhaustive list:
+
+* `client.TendermintRPC` -> `client.CometRPC`
+* `clitestutil.MockTendermintRPC` -> `clitestutil.MockCometRPC`
+
+### Configuration
+
+A new tool have been created for migrating configuration of the SDK. Use the following command to migrate your configuration:
+
+```bash
+simd config migrate v0.48
+```
+
+More information about [confix](https://docs.cosmos.network/main/tooling/confix).
+
+#### gRPC-Web
+
+gRPC-Web is now listening to the same address as the gRPC Gateway API server (default: `localhost:1317`).
+The possibility to listen to a different address has been removed, as well as its settings.
+Use `confix` to clean-up your `app.toml`. A nginx (or alike) reverse-proxy can be set to keep the previous behavior.
+
+#### Database
+
+ClevelDB, BoltDB and BadgerDB are not supported anymore. To migrate from a unsupported database to a supported database please use the database migration tool.
+
+<!-- TODO: write database migration tool -->
+
+### Protobuf
+
+The SDK is in the process of removing all `gogoproto` annotations.
+
+#### Stringer
+
+The `gogoproto.goproto_stringer = false` annotation has been removed from most proto files. This means that the `String()` method is being generated for types that previously had this annotation. The generated `String()` method uses `proto.CompactTextString` for _stringifying_ structs.
+[Verify](https://github.com/cosmos/cosmos-sdk/pull/13850#issuecomment-1328889651) the usage of the modified `String()` methods and double-check that they are not used in state-machine code.
+
+### Types
+
+#### Store
+
+References to `types/store.go` which contained aliases for store types have been remapped to point to appropriate  store/types, hence the `types/store.go` file is no longer needed and has been removed.
+
+##### Extract Store to a standalone module
+
+The `store` module is extracted to have a separate go.mod file which allows it be a standalone module. 
+All the store imports are now renamed to use `cosmossdk.io/store` instead of `github.com/cosmos/cosmos-sdk/store` across the SDK.
+
+### SimApp
+
+#### Module Assertions
+
+Previously, all modules were required to be set in `OrderBeginBlockers`, `OrderEndBlockers` and `OrderInitGenesis / OrderExportGenesis` in `app.go` / `app_config.go`.
+This is no longer the case, the assertion has been loosened to only require modules implementing, respectively, the `module.BeginBlockAppModule`, `module.EndBlockAppModule` and `module.HasGenesis` interfaces.
+
+### Modules
+
+#### `x/gov`
+
+##### Expedited Proposals
+
+The `gov` v1 module has been updated to support the ability to expedite governance proposals. When a proposal is expedited, the voting period will be shortened to `ExpeditedVotingPeriod` parameter. An expedited proposal must have an higher voting threshold than a classic proposal, that threshold is defined with the `ExpeditedThreshold` parameter.
+
+##### Cancelling Proposals
+
+The `gov` module has been updated to support the ability to cancel governance proposals. When a proposal is canceled, all the deposits of the proposal are either burnt or sent to `ProposalCancelDest` address. The deposits burn rate will be determined by a new parameter called `ProposalCancelRatio` parameter.
+
+```text
+	1. deposits * proposal_cancel_ratio will be burned or sent to `ProposalCancelDest` address , if `ProposalCancelDest` is empty then deposits will be burned.
+	2. deposits * (1 - proposal_cancel_ratio) will be sent to depositors.
+```
+
+By default, the new `ProposalCancelRatio` parameter is set to 0.5 during migration and `ProposalCancelDest` is set to empty string (i.e. burnt).
+
+#### `x/evidence`
+
+##### Extract evidence to a standalone module
+
+The `x/evidence` module is extracted to have a separate go.mod file which allows it be a standalone module. 
+All the evidence imports are now renamed to use `cosmossdk.io/x/evidence` instead of `github.com/cosmos/cosmos-sdk/x/evidence` across the SDK.
+
+#### `x/nft`
+
+##### Extract nft to a standalone module
+
+The `x/nft` module is extracted to have a separate go.mod file which allows it to be a standalone module. 
+
+#### x/feegrant
+
+##### Extract feegrant to a standalone module
+
+The `x/feegrant` module is extracted to have a separate go.mod file which allows it to be a standalone module.
+All the feegrant imports are now renamed to use `cosmossdk.io/x/feegrant` instead of `github.com/cosmos/cosmos-sdk/x/feegrant` across the SDK.
+
+#### `x/upgrade`
+
+##### Extract upgrade to a standalone module
+
+The `x/upgrade` module is extracted to have a separate go.mod file which allows it to be a standalone module. 
+All the upgrade imports are now renamed to use `cosmossdk.io/x/upgrade` instead of `github.com/cosmos/cosmos-sdk/x/upgrade` across the SDK.
+
+## [v0.47.x](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.47.0)
+
 ### Simulation
 
 Remove `RandomizedParams` from `AppModuleSimulation` interface. Previously, it used to generate random parameter changes during simulations, however, it does so through ParamChangeProposal which is now legacy. Since all modules were migrated, we can now safely remove this from `AppModuleSimulation` interface.
+
+Moreover, to support the `MsgUpdateParams` governance proposals for each modules, `AppModuleSimulation` now defines a `AppModule.ProposalMsgs` method in addition to `AppModule.ProposalContents`. That method defines the messages that can be used to submit a proposal and that should be tested in simulation.
+
+When a module has no proposal messages or proposal content to be tested by simulation, the `AppModule.ProposalMsgs` and `AppModule.ProposalContents` methods can be deleted.
 
 ### gRPC
 
@@ -18,7 +128,13 @@ is typically found in `RegisterAPIRoutes`.
 
 ### AppModule Interface
 
-Remove `Querier`, `Route` and `LegacyQuerier` from the app module interface. This removes and fully deprecates all legacy queriers. All modules no longer support the REST API previously known as the LCD, and the `sdk.Msg#Route` method won't be used anymore.
+Support for the `AppModule` `Querier`, `Route` and `LegacyQuerier` methods has been entirely removed from the `AppModule`
+interface. This removes and fully deprecates all legacy queriers. All modules no longer support the REST API previously
+known as the LCD, and the `sdk.Msg#Route` method won't be used anymore.
+
+Most other existing `AppModule` methods have been moved to extension interfaces in preparation for the migration
+to the `cosmossdk.io/core/appmodule` API in the next release. Most `AppModule` implementations should not be broken
+by this change.
 
 ### SimApp
 
@@ -26,9 +142,21 @@ The `simapp` package **should not be imported in your own app**. Instead, you sh
 
 #### App Wiring
 
-SimApp's `app.go` is now using [App Wiring](https://docs.cosmos.network/main/building-chain/depinject.html), the dependency injection framework of the Cosmos SDK.
-This means that modules are injected directly into SimApp thanks to a [configuration file](https://github.com/cosmos/cosmos-sdk/blob/main/simapp/app_config.go).
-The old behavior is preserved and can still be used, without the dependency injection framework, as shows [`app_legacy.go`](https://github.com/cosmos/cosmos-sdk/blob/main/simapp/app_legacy.go).
+SimApp's `app_v2.go` is using [App Wiring](https://docs.cosmos.network/main/building-apps/app-go-v2), the dependency injection framework of the Cosmos SDK.
+This means that modules are injected directly into SimApp thanks to a [configuration file](https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/simapp/app_config.go).
+The previous behavior, without the dependency injection framework, is still present in [`app.go`](https://github.com/cosmos/cosmos-sdk/blob/v0.47.0-rc1/simapp/app.go) and is not going anywhere.
+
+If you are using a `app.go` without dependency injection, add the following lines to your `app.go` in order to provide newer gRPC services:
+
+```go
+autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
+
+reflectionSvc, err := runtimeservices.NewReflectionService()
+if err != nil {
+    panic(err)
+}
+reflectionv1.RegisterReflectionServiceServer(app.GRPCQueryRouter(), reflectionSvc)
+```
 
 #### Constructor
 
@@ -54,7 +182,44 @@ The SDK has migrated from `gogo/protobuf` (which is currently unmaintained), to 
 This means you should replace all imports of `github.com/gogo/protobuf` to `github.com/cosmos/gogoproto`.
 This allows you to remove the replace directive `replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1` from your `go.mod` file.
 
-Please use the `ghcr.io/cosmos/proto-builder` image (version >= `0.11.0`) for generating protobuf files.
+Please use the `ghcr.io/cosmos/proto-builder` image (version >= `0.11.5`) for generating protobuf files.
+
+See which buf commit for `cosmos/cosmos-sdk` to pin in your `buf.yaml` file [here](./proto/README.md).
+
+#### Gogoproto Import Paths
+
+The SDK made a [patch fix](https://github.com/cosmos/gogoproto/pull/32) on its gogoproto repository to require that each proto file's package name matches its OS import path (relatively to a protobuf root import path, usually the root `proto/` folder, set by the `protoc -I` flag).
+
+For example, assuming you put all your proto files in subfolders inside your root `proto/` folder, then a proto file with package name `myapp.mymodule.v1` should be found in the `proto/myapp/mymodule/v1/` folder. If it is in another folder, the proto generation command will throw an error.
+
+If you are using a custom folder structure for your proto files, please reorganize them so that their OS path matches their proto package name.
+
+This is to allow the proto FileDescriptSets to be correctly registered, and this standardized OS import paths allows [Hubl](https://github.com/cosmos/cosmos-sdk/tree/main/tools/hubl) to reflectively talk to any chain.
+
+#### `{accepts,implements}_interface` proto annotations
+
+The SDK is normalizing the strings inside the Protobuf `accepts_interface` and `implements_interface` annotations. We require them to be fully-scoped names. They will soon be used by code generators like Pulsar and Telescope to match which messages can or cannot be packed inside `Any`s.
+
+Here are the following replacements that you need to perform on your proto files:
+
+```diff
+- "Content"
++ "cosmos.gov.v1beta1.Content"
+- "Authorization"
++ "cosmos.authz.v1beta1.Authorization"
+- "sdk.Msg"
++ "cosmos.base.v1beta1.Msg"
+- "AccountI"
++ "cosmos.auth.v1beta1.AccountI"
+- "ModuleAccountI"
++ "cosmos.auth.v1beta1.ModuleAccountI"
+- "FeeAllowanceI"
++ "cosmos.feegrant.v1beta1.FeeAllowanceI"
+```
+
+Please also check that in your own app's proto files that there are no single-word names for those two proto annotations. If so, then replace them with fully-qualified names, even though those names don't actually resolve to an actual protobuf entity.
+
+For more information, see the [encoding guide](./docs/docs/core/05-encoding.md).
 
 ### Transactions
 
@@ -82,6 +247,10 @@ ctx.EventManager().EmitEvent(
 )
 ```
 
+The module name is assumed by `baseapp` to be the second element of the message route: `"cosmos.bank.v1beta1.MsgSend" -> "bank"`.
+In case a module does not follow the standard message path, (e.g. IBC), it is advised to keep emitting the module name event.
+`Baseapp` only emits that event if the module have not already done so.
+
 #### `x/gov`
 
 ##### Minimum Proposal Deposit At Time of Submission
@@ -93,6 +262,32 @@ the necessary proportion of coins needed at the proposal submission time. The mo
 By default, the new `MinInitialDepositRatio` parameter is set to zero during migration. The value of zero signifies that this 
 feature is disabled. If chains wish to utilize the minimum proposal deposits at time of submission, the migration logic needs to be 
 modified to set the new parameter to the desired value.
+
+##### New Proposal.Proposer field
+
+The `Proposal` proto has been updated with proposer field. For proposal state migraton developers can call `v4.AddProposerAddressToProposal` in their upgrade handler to update all existing proposal and make them compatible and **this migration is optional**.
+
+```go
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	v4 "github.com/cosmos/cosmos-sdk/x/gov/migrations/v4"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+)
+
+func (app SimApp) RegisterUpgradeHandlers() {
+	app.UpgradeKeeper.SetUpgradeHandler(UpgradeName,
+		func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			// this migration is optional
+			// add proposal ids with proposers which are active (deposit or voting period)
+			proposals := make(map[uint64]string)
+			proposals[1] = "cosmos1luyncewxk4lm24k6gqy8y5dxkj0klr4tu0lmnj" ...
+			v4.AddProposerAddressToProposal(ctx, sdk.NewKVStoreKey(v4.ModuleName), app.appCodec, proposals)
+			return app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
+		})
+}
+
+```
 
 #### `x/consensus`
 
@@ -140,6 +335,11 @@ After:
 app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[upgradetypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName).String())
 bApp.SetParamStore(&app.ConsensusParamsKeeper)
 ```
+
+#### `x/nft`
+
+The SDK does not validate anymore the `classID` and `nftID` of an NFT, for extra flexibility in your NFT implementation.
+This means chain developers need to validate the `classID` and `nftID` of an NFT.
 
 ### Ledger
 
@@ -227,7 +427,7 @@ mistakes.
 
 #### `x/params`
 
-* The `x/param` module has been depreacted in favour of each module housing and providing way to modify their parameters. Each module that has parameters that are changable during runtime have an authority, the authority can be a module or user account. The Cosmos-SDK team recommends migrating modules away from using the param module. An example of how this could look like can be found [here](https://github.com/cosmos/cosmos-sdk/pull/12363). 
+* The `x/params` module has been depreacted in favour of each module housing and providing way to modify their parameters. Each module that has parameters that are changable during runtime have an authority, the authority can be a module or user account. The Cosmos-SDK team recommends migrating modules away from using the param module. An example of how this could look like can be found [here](https://github.com/cosmos/cosmos-sdk/pull/12363). 
 * The Param module will be maintained until April 18, 2023. At this point the module will reach end of life and be removed from the Cosmos SDK.
 
 #### `x/gov`
@@ -267,3 +467,4 @@ message MsgSetWithdrawAddress {
 <!-- todo: cosmos.scalar types -->
 
 When clients interract with a node they are required to set a codec in in the grpc.Dial. More information can be found in this [doc](https://docs.cosmos.network/v0.46/run-node/interact-node.html#programmatically-via-go).
+

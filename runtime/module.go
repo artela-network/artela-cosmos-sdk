@@ -5,17 +5,43 @@ import (
 
 	"cosmossdk.io/depinject"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"cosmossdk.io/core/store"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	runtimev1alpha1 "cosmossdk.io/api/cosmos/app/runtime/v1alpha1"
+	appv1alpha1 "cosmossdk.io/api/cosmos/app/v1alpha1"
 	"cosmossdk.io/core/intermodule"
 
 	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/depinject"
+
+	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+)
+
+type appModule struct {
+	app *App
+}
+
+func (m appModule) RegisterServices(configurator module.Configurator) {
+	err := m.app.registerRuntimeServices(configurator)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (m appModule) IsOnePerModuleType() {}
+func (m appModule) IsAppModule()        {}
+
+var (
+	_ appmodule.AppModule = appModule{}
+	_ module.HasServices  = appModule{}
 )
 
 // BaseAppOption is a depinject.AutoGroupType which can be used to pass
@@ -33,29 +59,27 @@ func init() {
 			ProvideTransientStoreKey,
 			ProvideMemoryStoreKey,
 			ProvideDeliverTx,
+			ProvideKVStoreService,
+			ProvideMemoryStoreService,
+			ProvideTransientStoreService,
 			ProvideInterModuleClient,
 		),
 		appmodule.Invoke(SetupAppBuilder),
 	)
 }
 
-func ProvideApp(moduleBasics map[string]AppModuleBasicWrapper) (
+func ProvideApp() (
 	codectypes.InterfaceRegistry,
 	codec.Codec,
 	*codec.LegacyAmino,
 	*AppBuilder,
 	codec.ProtoCodecMarshaler,
+	*baseapp.MsgServiceRouter,
+	appmodule.AppModule,
 ) {
 	interfaceRegistry := codectypes.NewInterfaceRegistry()
 	amino := codec.NewLegacyAmino()
 
-	// build codecs
-	basicManager := module.BasicManager{}
-	for name, wrapper := range moduleBasics {
-		basicManager[name] = wrapper
-		wrapper.RegisterInterfaces(interfaceRegistry)
-		wrapper.RegisterLegacyAminoCodec(amino)
-	}
 	std.RegisterInterfaces(interfaceRegistry)
 	std.RegisterLegacyAminoCodec(amino)
 
@@ -72,28 +96,37 @@ func ProvideApp(moduleBasics map[string]AppModuleBasicWrapper) (
 			BaseApp:           &baseapp.BaseApp{},
 		},
 	}
+	appBuilder := &AppBuilder{app}
 
 	return interfaceRegistry, cdc, amino, app, cdc
 }
 
-type appInputs struct {
+type AppInputs struct {
 	depinject.In
 
-	Config         *runtimev1alpha1.Module
-	AppBuilder     *AppBuilder
-	Modules        map[string]AppModuleWrapper
-	BaseAppOptions []BaseAppOption
+	AppConfig         *appv1alpha1.Config
+	Config            *runtimev1alpha1.Module
+	AppBuilder        *AppBuilder
+	Modules           map[string]appmodule.AppModule
+	BaseAppOptions    []BaseAppOption
+	InterfaceRegistry codectypes.InterfaceRegistry
+	LegacyAmino       *codec.LegacyAmino
 }
 
-func SetupAppBuilder(inputs appInputs) {
-	mm := &module.Manager{Modules: map[string]module.AppModule{}}
-	for name, wrapper := range inputs.Modules {
-		mm.Modules[name] = wrapper.AppModule
-	}
+func SetupAppBuilder(inputs AppInputs) {
 	app := inputs.AppBuilder.app
 	app.baseAppOptions = inputs.BaseAppOptions
 	app.config = inputs.Config
-	app.ModuleManager = mm
+	app.ModuleManager = module.NewManagerFromMap(inputs.Modules)
+	app.appConfig = inputs.AppConfig
+
+	for name, mod := range inputs.Modules {
+		if basicMod, ok := mod.(module.AppModuleBasic); ok {
+			app.basicManager[name] = basicMod
+			basicMod.RegisterInterfaces(inputs.InterfaceRegistry)
+			basicMod.RegisterLegacyAminoCodec(inputs.LegacyAmino)
+		}
+	}
 }
 
 func registerStoreKey(wrapper *AppBuilder, key storetypes.StoreKey) {

@@ -8,11 +8,12 @@ import (
 	"os"
 	"time"
 
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmtypes "github.com/tendermint/tendermint/types"
+	cmtjson "github.com/cometbft/cometbft/libs/json"
+	cmttypes "github.com/cometbft/cometbft/types"
 
 	"cosmossdk.io/math"
 	simappparams "cosmossdk.io/simapp/params"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -144,7 +145,7 @@ func AppStateRandomizedFn(
 	accs []simtypes.Account, genesisTimestamp time.Time, appParams simtypes.AppParams,
 ) (json.RawMessage, []simtypes.Account) {
 	numAccs := int64(len(accs))
-	genesisState := NewDefaultGenesisState(cdc)
+	genesisState := ModuleBasics.DefaultGenesis(cdc)
 
 	// generate a random amount of initial stake coins and a random initial
 	// number of bonded accounts
@@ -182,6 +183,7 @@ func AppStateRandomizedFn(
 		Accounts:     accs,
 		InitialStake: initialStake,
 		NumBonded:    numInitiallyBonded,
+		BondDenom:    sdk.DefaultBondDenom,
 		GenTimestamp: genesisTimestamp,
 	}
 
@@ -197,15 +199,15 @@ func AppStateRandomizedFn(
 
 // AppStateFromGenesisFileFn util function to generate the genesis AppState
 // from a genesis.json file.
-func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile string) (tmtypes.GenesisDoc, []simtypes.Account) {
+func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile string) (cmttypes.GenesisDoc, []simtypes.Account) {
 	bytes, err := os.ReadFile(genesisFile)
 	if err != nil {
 		panic(err)
 	}
 
-	var genesis tmtypes.GenesisDoc
-	// NOTE: Tendermint uses a custom JSON decoder for GenesisDoc
-	err = tmjson.Unmarshal(bytes, &genesis)
+	var genesis cmttypes.GenesisDoc
+	// NOTE: CometNFT uses a custom JSON decoder for GenesisDoc
+	err = cmtjson.Unmarshal(bytes, &genesis)
 	if err != nil {
 		panic(err)
 	}
@@ -224,8 +226,8 @@ func AppStateFromGenesisFileFn(r io.Reader, cdc codec.JSONCodec, genesisFile str
 	newAccs := make([]simtypes.Account, len(authGenesis.Accounts))
 	for i, acc := range authGenesis.Accounts {
 		// Pick a random private key, since we don't know the actual key
-		// This should be fine as it's only used for mock Tendermint validators
-		// and these keys are never actually used to sign by mock Tendermint.
+		// This should be fine as it's only used for mock CometBFT validators
+		// and these keys are never actually used to sign by mock CometBFT.
 		privkeySeed := make([]byte, 15)
 		if _, err := r.Read(privkeySeed); err != nil {
 			panic(err)
