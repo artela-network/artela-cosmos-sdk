@@ -4,9 +4,6 @@ import (
 	"fmt"
 
 	"cosmossdk.io/depinject"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"cosmossdk.io/core/store"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	runtimev1alpha1 "cosmossdk.io/api/cosmos/app/runtime/v1alpha1"
@@ -14,8 +11,6 @@ import (
 	"cosmossdk.io/core/intermodule"
 
 	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/depinject"
-
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -59,9 +54,6 @@ func init() {
 			ProvideTransientStoreKey,
 			ProvideMemoryStoreKey,
 			ProvideDeliverTx,
-			ProvideKVStoreService,
-			ProvideMemoryStoreService,
-			ProvideTransientStoreService,
 			ProvideInterModuleClient,
 		),
 		appmodule.Invoke(SetupAppBuilder),
@@ -91,14 +83,12 @@ func ProvideApp() (
 			interfaceRegistry: interfaceRegistry,
 			cdc:               cdc,
 			amino:             amino,
-			basicManager:      basicManager,
 			msgServiceRouter:  msgServiceRouter,
 			BaseApp:           &baseapp.BaseApp{},
 		},
 	}
-	appBuilder := &AppBuilder{app}
 
-	return interfaceRegistry, cdc, amino, app, cdc
+	return interfaceRegistry, cdc, amino, app, cdc, msgServiceRouter, nil
 }
 
 type AppInputs struct {

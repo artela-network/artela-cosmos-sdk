@@ -7,12 +7,13 @@ import (
 	"reflect"
 
 	"cosmossdk.io/errors"
+	"github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/tendermint/tendermint/crypto"
 	"google.golang.org/grpc"
 	protov2 "google.golang.org/protobuf/proto"
 
 	"cosmossdk.io/core/intermodule"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

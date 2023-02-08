@@ -6,13 +6,14 @@ import (
 	"sort"
 	"strings"
 
-	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	"golang.org/x/exp/maps"
+
+	"cosmossdk.io/log"
 
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
@@ -167,7 +168,7 @@ func (app *BaseApp) Setup(
 	app.logger = logger
 	app.name = name
 	app.db = db
-	app.cms = store.NewCommitMultiStore(db)
+	app.cms = store.NewCommitMultiStore(db, logger, storemetrics.NewNoOpMetrics())
 	app.storeLoader = DefaultStoreLoader
 	app.grpcQueryRouter = NewGRPCQueryRouter()
 	app.msgServiceRouter = NewMsgServiceRouter()
