@@ -41,7 +41,7 @@ func TestSupplyMigration(t *testing.T) {
 	require.NoError(t, err)
 
 	// New supply is indexed by denom.
-	supplyStore := prefix.NewStore(store, types.SupplyKey)
+	supplyStore := prefix.NewStore(store, types.SupplyKey.Bytes())
 	bz := supplyStore.Get([]byte("foo"))
 	var amount math.Int
 	err = amount.Unmarshal(bz)

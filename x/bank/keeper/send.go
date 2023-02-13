@@ -1,10 +1,7 @@
 package keeper
 
 import (
-	"cosmossdk.io/collections"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	gogotypes "github.com/cosmos/gogoproto/types"
 
 	"cosmossdk.io/store/prefix"
@@ -63,10 +60,6 @@ type BaseSendKeeper struct {
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
 	authority string
-
-	// STATE
-
-	Params collections.Item[types.Params]
 }
 
 func NewBaseSendKeeper(
@@ -80,8 +73,6 @@ func NewBaseSendKeeper(
 		panic(fmt.Errorf("invalid bank authority address: %w", err))
 	}
 
-	sb := collections.NewSchemaBuilder(runtime.NewKVStoreService(storeKey.(*storetypes.KVStoreKey)))
-
 	return BaseSendKeeper{
 		BaseViewKeeper: NewBaseViewKeeper(cdc, storeKey, ak),
 		cdc:            cdc,
@@ -89,8 +80,6 @@ func NewBaseSendKeeper(
 		storeKey:       storeKey,
 		blockedAddrs:   blockedAddrs,
 		authority:      authority,
-
-		Params: collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 }
 

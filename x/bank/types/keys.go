@@ -23,7 +23,7 @@ const (
 
 // KVStore keys
 var (
-	SupplyKey           = []byte{0x00}
+	SupplyKey           = collections.NewPrefix(0)
 	DenomMetadataPrefix = []byte{0x1}
 	DenomAddressPrefix  = []byte{0x03}
 

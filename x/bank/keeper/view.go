@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"cosmossdk.io/collections"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -39,14 +41,24 @@ type BaseViewKeeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
 	ak       types.AccountKeeper
+
+	// STATE
+
+	Params collections.Item[types.Params]
+	Supply collections.Map[string, sdk.Int]
 }
 
 // NewBaseViewKeeper returns a new BaseViewKeeper.
 func NewBaseViewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey, ak types.AccountKeeper) BaseViewKeeper {
+	sb := collections.NewSchemaBuilder(runtime.NewKVStoreService(storeKey.(*storetypes.KVStoreKey)))
+
 	return BaseViewKeeper{
 		cdc:      cdc,
 		storeKey: storeKey,
 		ak:       ak,
+
+		Params: collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
+		Supply: collections.NewMap(sb, types.SupplyKey, "supply", collections.StringKey, sdk.IntValue),
 	}
 }
 

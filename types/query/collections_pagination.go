@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -53,11 +54,22 @@ func CollectionFilteredPaginate[K, V any, C Collection[K, V]](
 		countTotal = true
 	}
 
-	if len(key) != 0 {
-		return collFilteredPaginateByKey(ctx, coll, key, reverse, limit, predicateFunc)
-	}
+	var (
+		results []collections.KeyValue[K, V]
+		pageRes *PageResponse
+		err     error
+	)
 
-	return collFilteredPaginateNoKey(ctx, coll, reverse, offset, limit, countTotal, predicateFunc)
+	if len(key) != 0 {
+		results, pageRes, err = collFilteredPaginateByKey(ctx, coll, key, reverse, limit, predicateFunc)
+	} else {
+		results, pageRes, err = collFilteredPaginateNoKey(ctx, coll, reverse, offset, limit, countTotal, predicateFunc)
+	}
+	// invalid iter error is ignored to retain Paginate behaviour
+	if errors.Is(err, collections.ErrInvalidIterator) {
+		return results, pageRes, nil
+	}
+	return results, pageRes, err
 }
 
 // collFilteredPaginateNoKey applies the provided pagination on the collection when the starting key is not set.
