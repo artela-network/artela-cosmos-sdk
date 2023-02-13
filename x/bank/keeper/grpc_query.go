@@ -8,8 +8,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"cosmossdk.io/store/prefix"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -183,19 +181,14 @@ func (k BaseKeeper) DenomsMetadata(c context.Context, req *types.QueryDenomsMeta
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.DenomMetadataPrefix)
-
-	metadatas := []types.Metadata{}
-	pageRes, err := query.Paginate(store, req.Pagination, func(_, value []byte) error {
-		var metadata types.Metadata
-		k.cdc.MustUnmarshal(value, &metadata)
-
-		metadatas = append(metadatas, metadata)
-		return nil
-	})
+	kvs, pageRes, err := query.CollectionPaginate[string, types.Metadata](c, k.BaseSendKeeper.DenomMetadata, req.Pagination)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
+	}
+
+	metadatas := make([]types.Metadata, len(kvs))
+	for i, kv := range kvs {
+		metadatas[i] = kv.Value
 	}
 
 	return &types.QueryDenomsMetadataResponse{

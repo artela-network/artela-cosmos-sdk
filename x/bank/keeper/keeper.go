@@ -3,11 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/internal/conv"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -219,65 +217,52 @@ func (k BaseKeeper) HasSupply(ctx sdk.Context, denom string) bool {
 // GetDenomMetaData retrieves the denomination metadata. returns the metadata and true if the denom exists,
 // false otherwise.
 func (k BaseKeeper) GetDenomMetaData(ctx sdk.Context, denom string) (types.Metadata, bool) {
-	store := ctx.KVStore(k.storeKey)
-	store = prefix.NewStore(store, types.DenomMetadataPrefix)
-
-	bz := store.Get(conv.UnsafeStrToBytes(denom))
-	if bz == nil {
-		return types.Metadata{}, false
-	}
-
-	var metadata types.Metadata
-	k.cdc.MustUnmarshal(bz, &metadata)
-
-	return metadata, true
+	m, err := k.BaseSendKeeper.DenomMetadata.Get(ctx, denom)
+	return m, err == nil
 }
 
 // HasDenomMetaData checks if the denomination metadata exists in store.
 func (k BaseKeeper) HasDenomMetaData(ctx sdk.Context, denom string) bool {
-	store := ctx.KVStore(k.storeKey)
-	store = prefix.NewStore(store, types.DenomMetadataPrefix)
-	return store.Has(conv.UnsafeStrToBytes(denom))
+	has, err := k.BaseSendKeeper.DenomMetadata.Has(ctx, denom)
+	return has && err == nil
 }
 
 // GetAllDenomMetaData retrieves all denominations metadata
 func (k BaseKeeper) GetAllDenomMetaData(ctx sdk.Context) []types.Metadata {
-	denomMetaData := make([]types.Metadata, 0)
-	k.IterateAllDenomMetaData(ctx, func(metadata types.Metadata) bool {
-		denomMetaData = append(denomMetaData, metadata)
-		return false
-	})
-
-	return denomMetaData
+	iter, err := k.BaseSendKeeper.DenomMetadata.Iterate(ctx, nil)
+	if err != nil {
+		return nil
+	}
+	vs, err := iter.Values()
+	if err != nil {
+		return nil
+	}
+	return vs
 }
 
 // IterateAllDenomMetaData iterates over all the denominations metadata and
 // provides the metadata to a callback. If true is returned from the
 // callback, iteration is halted.
 func (k BaseKeeper) IterateAllDenomMetaData(ctx sdk.Context, cb func(types.Metadata) bool) {
-	store := ctx.KVStore(k.storeKey)
-	denomMetaDataStore := prefix.NewStore(store, types.DenomMetadataPrefix)
-
-	iterator := denomMetaDataStore.Iterator(nil, nil)
-	defer sdk.LogDeferred(ctx.Logger(), func() error { return iterator.Close() })
-
-	for ; iterator.Valid(); iterator.Next() {
-		var metadata types.Metadata
-		k.cdc.MustUnmarshal(iterator.Value(), &metadata)
-
-		if cb(metadata) {
-			break
+	iter, err := k.BaseSendKeeper.DenomMetadata.Iterate(ctx, nil)
+	if err != nil {
+		return
+	}
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		v, err := iter.Value()
+		if err != nil {
+			return
+		}
+		if cb(v) {
+			return
 		}
 	}
 }
 
 // SetDenomMetaData sets the denominations metadata
 func (k BaseKeeper) SetDenomMetaData(ctx sdk.Context, denomMetaData types.Metadata) {
-	store := ctx.KVStore(k.storeKey)
-	denomMetaDataStore := prefix.NewStore(store, types.DenomMetadataPrefix)
-
-	m := k.cdc.MustMarshal(&denomMetaData)
-	denomMetaDataStore.Set([]byte(denomMetaData.Base), m)
+	_ = k.BaseSendKeeper.DenomMetadata.Set(ctx, denomMetaData.Base, denomMetaData)
 }
 
 // SendCoinsFromModuleToAccount transfers coins from a ModuleAccount to an AccAddress.

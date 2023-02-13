@@ -84,10 +84,10 @@ func migrateDenomMetadata(store storetypes.KVStore, logger log.Logger) error {
 		oldKey := oldDenomMetaDataIter.Key()
 		l := len(oldKey) / 2
 
-		newKey := make([]byte, len(types.DenomMetadataPrefix)+l)
+		newKey := make([]byte, len(types.DenomMetadataPrefix.Bytes())+l)
 		// old key: prefix_bytes | denom_bytes | denom_bytes
-		copy(newKey, types.DenomMetadataPrefix)
-		copy(newKey[len(types.DenomMetadataPrefix):], oldKey[:l])
+		copy(newKey, types.DenomMetadataPrefix.Bytes())
+		copy(newKey[len(types.DenomMetadataPrefix.Bytes()):], oldKey[:l])
 		store.Set(newKey, oldDenomMetaDataIter.Value())
 		oldDenomMetaDataStore.Delete(oldKey)
 	}

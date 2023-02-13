@@ -44,8 +44,9 @@ type BaseViewKeeper struct {
 
 	// STATE
 
-	Params collections.Item[types.Params]
-	Supply collections.Map[string, sdk.Int]
+	Params        collections.Item[types.Params]
+	Supply        collections.Map[string, sdk.Int]
+	DenomMetadata collections.Map[string, types.Metadata]
 }
 
 // NewBaseViewKeeper returns a new BaseViewKeeper.
@@ -57,8 +58,9 @@ func NewBaseViewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey, ak t
 		storeKey: storeKey,
 		ak:       ak,
 
-		Params: collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
-		Supply: collections.NewMap(sb, types.SupplyKey, "supply", collections.StringKey, sdk.IntValue),
+		Params:        collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
+		Supply:        collections.NewMap(sb, types.SupplyKey, "supply", collections.StringKey, sdk.IntValue),
+		DenomMetadata: collections.NewMap(sb, types.DenomMetadataPrefix, "denom_metadata", collections.StringKey, codec.CollValue[types.Metadata](cdc)),
 	}
 }
 
