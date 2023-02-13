@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"cosmossdk.io/collections"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
 	gogotypes "github.com/cosmos/gogoproto/types"
 
@@ -61,6 +63,10 @@ type BaseSendKeeper struct {
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
 	authority string
+
+	// STATE
+
+	Params collections.Item[types.Params]
 }
 
 func NewBaseSendKeeper(
@@ -74,6 +80,8 @@ func NewBaseSendKeeper(
 		panic(fmt.Errorf("invalid bank authority address: %w", err))
 	}
 
+	sb := collections.NewSchemaBuilder(runtime.NewKVStoreService(storeKey.(*storetypes.KVStoreKey)))
+
 	return BaseSendKeeper{
 		BaseViewKeeper: NewBaseViewKeeper(cdc, storeKey, ak),
 		cdc:            cdc,
@@ -81,6 +89,8 @@ func NewBaseSendKeeper(
 		storeKey:       storeKey,
 		blockedAddrs:   blockedAddrs,
 		authority:      authority,
+
+		Params: collections.NewItem(sb, types.ParamsKey, "params", codec.CollValue[types.Params](cdc)),
 	}
 }
 
@@ -91,14 +101,8 @@ func (k BaseSendKeeper) GetAuthority() string {
 
 // GetParams returns the total set of bank parameters.
 func (k BaseSendKeeper) GetParams(ctx sdk.Context) (params types.Params) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.ParamsKey)
-	if bz == nil {
-		return params
-	}
-
-	k.cdc.MustUnmarshal(bz, &params)
-	return params
+	p, _ := k.Params.Get(ctx)
+	return p
 }
 
 // SetParams sets the total set of bank parameters.
@@ -116,14 +120,7 @@ func (k BaseSendKeeper) SetParams(ctx sdk.Context, params types.Params) error {
 		params = types.NewParams(params.DefaultSendEnabled)
 	}
 
-	store := ctx.KVStore(k.storeKey)
-	bz, err := k.cdc.Marshal(&params)
-	if err != nil {
-		return err
-	}
-
-	store.Set(types.ParamsKey, bz)
-	return nil
+	return k.Params.Set(ctx, params)
 }
 
 // InputOutputCoins performs multi-send functionality. It accepts a series of

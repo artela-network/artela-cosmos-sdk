@@ -10,6 +10,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func NewKVStoreService(key *storetypes.KVStoreKey) store.KVStoreService {
+	return kvStoreService{key: key}
+}
+
 type kvStoreService struct {
 	key *storetypes.KVStoreKey
 }

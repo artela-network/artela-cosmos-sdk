@@ -1,6 +1,7 @@
 package types
 
 import (
+	"cosmossdk.io/collections"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/kv"
@@ -34,7 +35,7 @@ var (
 	SendEnabledPrefix = []byte{0x04}
 
 	// ParamsKey is the prefix for x/bank parameters
-	ParamsKey = []byte{0x05}
+	ParamsKey = collections.NewPrefix(5)
 )
 
 // AddressAndDenomFromBalancesStore returns an account address and denom from a balances prefix
