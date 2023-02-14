@@ -2,13 +2,13 @@ package keeper
 
 import (
 	"cosmossdk.io/collections"
+	"cosmossdk.io/collections/indexes"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 
-	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -36,6 +36,21 @@ type ViewKeeper interface {
 	IterateAllBalances(ctx sdk.Context, cb func(address sdk.AccAddress, coin sdk.Coin) (stop bool))
 }
 
+func NewBalanceByDenomIndex(sb *collections.SchemaBuilder) *indexes.MultiPair[sdk.AccAddress, string, math.Int] {
+	return indexes.NewMultiPair[math.Int](
+		sb, types.DenomAddressPrefix, "address_by_denom_index",
+		collections.PairKeyCodec(sdk.AccAddressKey, collections.StringKey),
+	)
+}
+
+type BalancesIndex struct {
+	Denom *indexes.MultiPair[sdk.AccAddress, string, math.Int]
+}
+
+func (b BalancesIndex) IndexesList() []collections.Index[collections.Pair[sdk.AccAddress, string], math.Int] {
+	return []collections.Index[collections.Pair[sdk.AccAddress, string], math.Int]{b.Denom}
+}
+
 // BaseViewKeeper implements a read only keeper implementation of ViewKeeper.
 type BaseViewKeeper struct {
 	cdc      codec.BinaryCodec
@@ -48,7 +63,7 @@ type BaseViewKeeper struct {
 	Supply        collections.Map[string, sdk.Int]
 	DenomMetadata collections.Map[string, types.Metadata]
 	SendEnabled   collections.Map[string, bool]
-	Balances      collections.Map[collections.Pair[sdk.AccAddress, string], sdk.Int]
+	Balances      *collections.IndexedMap[collections.Pair[sdk.AccAddress, string], sdk.Int, BalancesIndex]
 }
 
 // NewBaseViewKeeper returns a new BaseViewKeeper.
@@ -64,7 +79,11 @@ func NewBaseViewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey, ak t
 		Supply:        collections.NewMap(sb, types.SupplyKey, "supply", collections.StringKey, sdk.IntValue),
 		DenomMetadata: collections.NewMap(sb, types.DenomMetadataPrefix, "denom_metadata", collections.StringKey, codec.CollValue[types.Metadata](cdc)),
 		SendEnabled:   collections.NewMap(sb, types.SendEnabledPrefix, "send_enabled", collections.StringKey, collections.BoolValue),
-		Balances:      collections.NewMap(sb, types.BalancesPrefix, "balances", collections.PairKeyCodec(sdk.AccAddressKey, collections.StringKey), sdk.IntValue),
+		Balances: collections.NewIndexedMap(
+			sb, types.BalancesPrefix, "balances",
+			collections.PairKeyCodec(sdk.AccAddressKey, collections.StringKey), sdk.IntValue, // TODO maybe use UnmarshalBalanceCompat
+			BalancesIndex{Denom: NewBalanceByDenomIndex(sb)},
+		),
 	}
 }
 
@@ -219,12 +238,6 @@ func (k BaseViewKeeper) ValidateBalance(ctx sdk.Context, addr sdk.AccAddress) er
 	}
 
 	return nil
-}
-
-// getDenomAddressPrefixStore returns a prefix store that acts as a reverse index
-// between a denomination and account balance for that denomination.
-func (k BaseViewKeeper) getDenomAddressPrefixStore(ctx sdk.Context, denom string) prefix.Store {
-	return prefix.NewStore(ctx.KVStore(k.storeKey), types.CreateDenomAddressPrefix(denom))
 }
 
 // UnmarshalBalanceCompat unmarshal balance amount from storage, it's backward-compatible with the legacy format.

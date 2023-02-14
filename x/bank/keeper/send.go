@@ -3,14 +3,12 @@ package keeper
 import (
 	"context"
 	"cosmossdk.io/collections"
-	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
 )
@@ -284,8 +282,6 @@ func (k BaseSendKeeper) addCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.C
 // initBalances sets the balance (multiple coins) for an account by address.
 // An error is returned upon failure.
 func (k BaseSendKeeper) initBalances(ctx sdk.Context, addr sdk.AccAddress, balances sdk.Coins) error {
-	denomPrefixStores := make(map[string]prefix.Store) // memoize prefix stores
-
 	for i := range balances {
 		balance := balances[i]
 		if !balance.IsValid() {
@@ -297,19 +293,6 @@ func (k BaseSendKeeper) initBalances(ctx sdk.Context, addr sdk.AccAddress, balan
 			err := k.Balances.Set(ctx, collections.Join(addr, balance.Denom), balance.Amount)
 			if err != nil {
 				return err
-			}
-
-			denomPrefixStore, ok := denomPrefixStores[balance.Denom]
-			if !ok {
-				denomPrefixStore = k.getDenomAddressPrefixStore(ctx, balance.Denom)
-				denomPrefixStores[balance.Denom] = denomPrefixStore
-			}
-
-			// Store a reverse index from denomination to account address with a
-			// sentinel value.
-			denomAddrKey := address.MustLengthPrefix(addr)
-			if !denomPrefixStore.Has(denomAddrKey) {
-				denomPrefixStore.Set(denomAddrKey, []byte{0})
 			}
 		}
 	}
@@ -323,25 +306,16 @@ func (k BaseSendKeeper) setBalance(ctx sdk.Context, addr sdk.AccAddress, balance
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, balance.String())
 	}
 
-	denomPrefixStore := k.getDenomAddressPrefixStore(ctx, balance.Denom)
-
 	// x/bank invariants prohibit persistence of zero balances
 	if balance.IsZero() {
 		err := k.Balances.Remove(ctx, collections.Join(addr, balance.Denom))
 		if err != nil {
 			return err
 		}
-		denomPrefixStore.Delete(address.MustLengthPrefix(addr))
 	} else {
 		err := k.Balances.Set(ctx, collections.Join(addr, balance.Denom), balance.Amount)
 		if err != nil {
 			return err
-		}
-		// Store a reverse index from denomination to account address with a
-		// sentinel value.
-		denomAddrKey := address.MustLengthPrefix(addr)
-		if !denomPrefixStore.Has(denomAddrKey) {
-			denomPrefixStore.Set(denomAddrKey, []byte{0})
 		}
 	}
 
