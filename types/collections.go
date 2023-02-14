@@ -4,51 +4,8 @@ import (
 	"context"
 	"cosmossdk.io/collections"
 	collcodec "cosmossdk.io/collections/codec"
+	"cosmossdk.io/math"
 )
-
-type coll[K, V any] interface {
-	Iterate(ctx context.Context, ranger collections.Ranger[K]) (collections.Iterator[K, V], error)
-}
-
-func IterateCallBack[K, V any, C coll[K, V]](ctx context.Context, coll C, cb func(key K, value V) bool) error {
-	iter, err := coll.Iterate(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		kv, err := iter.KeyValue()
-		if err != nil {
-			return err
-		}
-		if cb(kv.Key, kv.Value) {
-			return nil
-		}
-	}
-	return nil
-}
-
-func IterateCallBackWithRange[K, V any, C coll[K, V], R collections.Ranger[K]](
-	ctx context.Context, coll C, ranger R, cb func(key K, value V) bool,
-) error {
-	iter, err := coll.Iterate(ctx, ranger)
-	if err != nil {
-		return err
-	}
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		kv, err := iter.KeyValue()
-		if err != nil {
-			return err
-		}
-		if cb(kv.Key, kv.Value) {
-			return nil
-		}
-	}
-	return nil
-}
 
 var (
 	// AccAddressKey follows the same semantics of collections.BytesKey.
@@ -69,7 +26,61 @@ var (
 		stringDecoder: ConsAddressFromBech32,
 		keyType:       "sdk.ConsAddress",
 	}
+
+	// IntValue represents a collections.ValueCodec to work with Int.
+	IntValue collcodec.ValueCodec[math.Int] = intValueCodec{}
 )
+
+type coll[K, V any] interface {
+	Iterate(ctx context.Context, ranger collections.Ranger[K]) (collections.Iterator[K, V], error)
+}
+
+// IterateAndCallBack is a helper function that applies one of the most common patterns in the sdk.
+// It iterates over the entire collection and calls the provided function with the key and the value
+// of the iterator. If the iteration needs to be terminated then the provided function should return
+// true. The iterator is closed when this function exits.
+func IterateAndCallBack[K, V any, C coll[K, V]](ctx context.Context, coll C, cb func(key K, value V) bool) error {
+	iter, err := coll.Iterate(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		kv, err := iter.KeyValue()
+		if err != nil {
+			return err
+		}
+		if cb(kv.Key, kv.Value) {
+			return nil
+		}
+	}
+	return nil
+}
+
+// IterateAndCallBackWithRange applies the same logic of IterateAndCallBack, but it
+// allows consumers to provide an extra argument, a Ranger, whose purpose is to
+// set bounds to the iterator range.
+func IterateAndCallBackWithRange[K, V any, C coll[K, V], R collections.Ranger[K]](
+	ctx context.Context, coll C, ranger R, cb func(key K, value V) bool,
+) error {
+	iter, err := coll.Iterate(ctx, ranger)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		kv, err := iter.KeyValue()
+		if err != nil {
+			return err
+		}
+		if cb(kv.Key, kv.Value) {
+			return nil
+		}
+	}
+	return nil
+}
 
 type addressUnion interface {
 	AccAddress | ValAddress | ConsAddress
@@ -124,4 +135,42 @@ func (a genericAddressKey[T]) DecodeNonTerminal(buffer []byte) (int, T, error) {
 
 func (a genericAddressKey[T]) SizeNonTerminal(key T) int {
 	return collections.BytesKey.SizeNonTerminal(key)
+}
+
+// Collection Codecs
+
+type intValueCodec struct{}
+
+func (i intValueCodec) Encode(value math.Int) ([]byte, error) {
+	return value.Marshal()
+}
+
+func (i intValueCodec) Decode(b []byte) (math.Int, error) {
+	v := new(Int)
+	err := v.Unmarshal(b)
+	if err != nil {
+		return Int{}, err
+	}
+	return *v, nil
+}
+
+func (i intValueCodec) EncodeJSON(value math.Int) ([]byte, error) {
+	return value.MarshalJSON()
+}
+
+func (i intValueCodec) DecodeJSON(b []byte) (Int, error) {
+	v := new(Int)
+	err := v.UnmarshalJSON(b)
+	if err != nil {
+		return Int{}, err
+	}
+	return *v, nil
+}
+
+func (i intValueCodec) Stringify(value Int) string {
+	return value.String()
+}
+
+func (i intValueCodec) ValueType() string {
+	return "math.Int"
 }
