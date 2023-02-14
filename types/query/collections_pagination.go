@@ -3,11 +3,18 @@ package query
 import (
 	"context"
 	collcodec "cosmossdk.io/collections/codec"
+	storetypes "cosmossdk.io/store/types"
 	"errors"
 	"fmt"
 
 	"cosmossdk.io/collections"
 )
+
+// CollectionsPaginateOptions provides extra options for pagination in collections.
+type CollectionsPaginateOptions[K any] struct {
+	// Prefix allows to optionally set a prefix for the pagination.
+	Prefix *K
+}
 
 // Collection defines the minimum required API of a collection
 // to work with pagination.
@@ -28,6 +35,24 @@ func CollectionPaginate[K, V any, C Collection[K, V]](
 	return CollectionFilteredPaginate[K, V](ctx, coll, pageReq, nil)
 }
 
+// PairCollectionFilteredPaginate is a helper method to iterate over collections whose primary key
+// is a collections.Pair, it allows to define a prefix for the iteration, with a predicate
+// function that includes results only if true is returned.
+func PairCollectionFilteredPaginate[K1, K2, V any, C Collection[collections.Pair[K1, K2], V]](
+	ctx context.Context,
+	coll C,
+	pageReq *PageRequest,
+	prefix K1,
+	predicateFunc func(keyPart2 K2, value V) bool,
+) ([]collections.KeyValue[collections.Pair[K1, K2], V], *PageResponse, error) {
+	return CollectionFilteredPaginate(ctx, coll, pageReq, func(key collections.Pair[K1, K2], value V) (include bool) {
+		return predicateFunc(key.K2(), value)
+	}, func(opt *CollectionsPaginateOptions[collections.Pair[K1, K2]]) {
+		p := collections.PairPrefix[K1, K2](prefix)
+		opt.Prefix = &p
+	})
+}
+
 // CollectionFilteredPaginate works in the same way as FilteredPaginate but for collection types.
 // A nil predicateFunc means no filtering is applied and results are collected as is.
 func CollectionFilteredPaginate[K, V any, C Collection[K, V]](
@@ -35,6 +60,7 @@ func CollectionFilteredPaginate[K, V any, C Collection[K, V]](
 	coll C,
 	pageReq *PageRequest,
 	predicateFunc func(key K, value V) (include bool),
+	opts ...func(opt *CollectionsPaginateOptions[K]),
 ) ([]collections.KeyValue[K, V], *PageResponse, error) {
 	if pageReq == nil {
 		pageReq = &PageRequest{}
@@ -61,10 +87,23 @@ func CollectionFilteredPaginate[K, V any, C Collection[K, V]](
 		err     error
 	)
 
+	opt := new(CollectionsPaginateOptions[K])
+	for _, o := range opts {
+		o(opt)
+	}
+
+	var prefix []byte
+	if opt.Prefix != nil {
+		prefix, err = encodeCollKey[K, V](coll, *opt.Prefix)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
 	if len(key) != 0 {
-		results, pageRes, err = collFilteredPaginateByKey(ctx, coll, key, reverse, limit, predicateFunc)
+		results, pageRes, err = collFilteredPaginateByKey(ctx, coll, prefix, key, reverse, limit, predicateFunc)
 	} else {
-		results, pageRes, err = collFilteredPaginateNoKey(ctx, coll, reverse, offset, limit, countTotal, predicateFunc)
+		results, pageRes, err = collFilteredPaginateNoKey(ctx, coll, prefix, reverse, offset, limit, countTotal, predicateFunc)
 	}
 	// invalid iter error is ignored to retain Paginate behaviour
 	if errors.Is(err, collections.ErrInvalidIterator) {
@@ -78,13 +117,14 @@ func CollectionFilteredPaginate[K, V any, C Collection[K, V]](
 func collFilteredPaginateNoKey[K, V any, C Collection[K, V]](
 	ctx context.Context,
 	coll C,
+	prefix []byte,
 	reverse bool,
 	offset uint64,
 	limit uint64,
 	countTotal bool,
 	predicateFunc func(K, V) bool,
 ) ([]collections.KeyValue[K, V], *PageResponse, error) {
-	iterator, err := getCollIter[K, V](ctx, coll, nil, reverse)
+	iterator, err := getCollIter[K, V](ctx, coll, prefix, nil, reverse)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -167,12 +207,13 @@ func advanceIter[I interface {
 func collFilteredPaginateByKey[K, V any, C Collection[K, V]](
 	ctx context.Context,
 	coll C,
+	prefix []byte,
 	key []byte,
 	reverse bool,
 	limit uint64,
 	predicateFunc func(K, V) bool,
 ) ([]collections.KeyValue[K, V], *PageResponse, error) {
-	iterator, err := getCollIter[K, V](ctx, coll, key, reverse)
+	iterator, err := getCollIter[K, V](ctx, coll, prefix, key, reverse)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -228,9 +269,14 @@ func encodeCollKey[K, V any](coll Collection[K, V], key K) ([]byte, error) {
 	return buffer, err
 }
 
-func getCollIter[K, V any](ctx context.Context, coll Collection[K, V], start []byte, reverse bool) (collections.Iterator[K, V], error) {
+func getCollIter[K, V any](ctx context.Context, coll Collection[K, V], prefix []byte, start []byte, reverse bool) (collections.Iterator[K, V], error) {
+	var end []byte
+	if prefix != nil {
+		start = append(prefix, start...)
+		end = storetypes.PrefixEndBytes(prefix)
+	}
 	if reverse {
 		return coll.IterateRaw(ctx, nil, start, collections.OrderDescending)
 	}
-	return coll.IterateRaw(ctx, start, nil, collections.OrderAscending)
+	return coll.IterateRaw(ctx, start, end, collections.OrderAscending)
 }

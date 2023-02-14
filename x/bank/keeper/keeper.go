@@ -240,7 +240,7 @@ func (k BaseKeeper) GetAllDenomMetaData(ctx sdk.Context) (mds []types.Metadata) 
 // provides the metadata to a callback. If true is returned from the
 // callback, iteration is halted.
 func (k BaseKeeper) IterateAllDenomMetaData(ctx sdk.Context, cb func(types.Metadata) bool) {
-	_ = sdk.IterateCallBack(ctx, k.BaseSendKeeper.DenomMetadata, nil, func(_ string, value types.Metadata) bool {
+	_ = sdk.IterateCallBack(ctx, k.BaseSendKeeper.DenomMetadata, func(_ string, value types.Metadata) bool {
 		return cb(value)
 	})
 }
@@ -455,7 +455,7 @@ func (k BaseKeeper) trackUndelegation(ctx sdk.Context, addr sdk.AccAddress, amt 
 // with the balance of each coin.
 // The iteration stops if the callback returns true.
 func (k BaseViewKeeper) IterateTotalSupply(ctx sdk.Context, cb func(sdk.Coin) bool) {
-	_ = sdk.IterateCallBack(ctx, k.Supply, nil, func(key string, value sdk.Int) bool {
+	_ = sdk.IterateCallBack(ctx, k.Supply, func(key string, value sdk.Int) bool {
 		return cb(sdk.NewCoin(key, value))
 	})
 }

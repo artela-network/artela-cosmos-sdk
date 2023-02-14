@@ -6,9 +6,32 @@ import (
 	collcodec "cosmossdk.io/collections/codec"
 )
 
-func IterateCallBack[K, V any, C interface {
+type coll[K, V any] interface {
 	Iterate(ctx context.Context, ranger collections.Ranger[K]) (collections.Iterator[K, V], error)
-}](ctx context.Context, coll C, ranger collections.Ranger[K], cb func(key K, value V) bool) error {
+}
+
+func IterateCallBack[K, V any, C coll[K, V]](ctx context.Context, coll C, cb func(key K, value V) bool) error {
+	iter, err := coll.Iterate(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		kv, err := iter.KeyValue()
+		if err != nil {
+			return err
+		}
+		if cb(kv.Key, kv.Value) {
+			return nil
+		}
+	}
+	return nil
+}
+
+func IterateCallBackWithRange[K, V any, C coll[K, V], R collections.Ranger[K]](
+	ctx context.Context, coll C, ranger R, cb func(key K, value V) bool,
+) error {
 	iter, err := coll.Iterate(ctx, ranger)
 	if err != nil {
 		return err

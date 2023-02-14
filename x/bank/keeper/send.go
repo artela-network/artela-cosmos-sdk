@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"cosmossdk.io/collections"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	"fmt"
@@ -283,7 +284,6 @@ func (k BaseSendKeeper) addCoins(ctx sdk.Context, addr sdk.AccAddress, amt sdk.C
 // initBalances sets the balance (multiple coins) for an account by address.
 // An error is returned upon failure.
 func (k BaseSendKeeper) initBalances(ctx sdk.Context, addr sdk.AccAddress, balances sdk.Coins) error {
-	accountStore := k.getAccountStore(ctx, addr)
 	denomPrefixStores := make(map[string]prefix.Store) // memoize prefix stores
 
 	for i := range balances {
@@ -294,11 +294,10 @@ func (k BaseSendKeeper) initBalances(ctx sdk.Context, addr sdk.AccAddress, balan
 
 		// x/bank invariants prohibit persistence of zero balances
 		if !balance.IsZero() {
-			amount, err := balance.Amount.Marshal()
+			err := k.Balances.Set(ctx, collections.Join(addr, balance.Denom), balance.Amount)
 			if err != nil {
 				return err
 			}
-			accountStore.Set([]byte(balance.Denom), amount)
 
 			denomPrefixStore, ok := denomPrefixStores[balance.Denom]
 			if !ok {
@@ -324,21 +323,20 @@ func (k BaseSendKeeper) setBalance(ctx sdk.Context, addr sdk.AccAddress, balance
 		return sdkerrors.Wrap(sdkerrors.ErrInvalidCoins, balance.String())
 	}
 
-	accountStore := k.getAccountStore(ctx, addr)
 	denomPrefixStore := k.getDenomAddressPrefixStore(ctx, balance.Denom)
 
 	// x/bank invariants prohibit persistence of zero balances
 	if balance.IsZero() {
-		accountStore.Delete([]byte(balance.Denom))
-		denomPrefixStore.Delete(address.MustLengthPrefix(addr))
-	} else {
-		amount, err := balance.Amount.Marshal()
+		err := k.Balances.Remove(ctx, collections.Join(addr, balance.Denom))
 		if err != nil {
 			return err
 		}
-
-		accountStore.Set([]byte(balance.Denom), amount)
-
+		denomPrefixStore.Delete(address.MustLengthPrefix(addr))
+	} else {
+		err := k.Balances.Set(ctx, collections.Join(addr, balance.Denom), balance.Amount)
+		if err != nil {
+			return err
+		}
 		// Store a reverse index from denomination to account address with a
 		// sentinel value.
 		denomAddrKey := address.MustLengthPrefix(addr)
@@ -423,7 +421,7 @@ func (k BaseSendKeeper) DeleteSendEnabled(ctx sdk.Context, denoms ...string) {
 
 // IterateSendEnabledEntries iterates over all the SendEnabled entries.
 func (k BaseSendKeeper) IterateSendEnabledEntries(ctx sdk.Context, cb func(denom string, sendEnabled bool) bool) {
-	_ = sdk.IterateCallBack(ctx, k.SendEnabled, nil, cb)
+	_ = sdk.IterateCallBack(ctx, k.SendEnabled, cb)
 }
 
 // GetAllSendEnabledEntries gets all the SendEnabled entries that are stored.
