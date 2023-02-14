@@ -9,6 +9,33 @@ import (
 	"fmt"
 )
 
+type pairIdx[K1, K2 any] interface {
+	IterateRaw(ctx context.Context, start, end []byte, order collections.Order) (collections.Iterator[collections.Pair[K2, K1], collections.NoValue], error)
+	KeyCodec() collcodec.KeyCodec[collections.Pair[K2, K1]]
+}
+
+func PaginatePairIndexWithPrefix[K1, K2 any, Idx pairIdx[K1, K2]](
+	ctx context.Context, index Idx, pageReq *PageRequest, prefix K2, predicateFunc func(indexingKey K2, indexedKey K1) bool,
+) (
+	*PageResponse, error) {
+	_, pageRes, err := CollectionFilteredPaginate(ctx, index, pageReq, func(key collections.Pair[K2, K1], _ collections.NoValue) (include bool) {
+		return predicateFunc(key.K1(), key.K2())
+	}, func(o *CollectionsPaginateOptions[collections.Pair[K2, K1]]) {
+		p := collections.PairPrefix[K2, K1](prefix)
+		o.Prefix = &p
+	})
+	return pageRes, err
+}
+
+func PaginatePairIndex[K1, K2 any, Idx pairIdx[K1, K2]](
+	ctx context.Context, index Idx, pageReq *PageRequest, predicateFunc func(indexingKey K2, indexedKey K1) bool,
+) (*PageResponse, error) {
+	_, pageRes, err := CollectionFilteredPaginate(ctx, index, pageReq, func(key collections.Pair[K2, K1], _ collections.NoValue) (include bool) {
+		return predicateFunc(key.K1(), key.K2())
+	})
+	return pageRes, err
+}
+
 // CollectionsPaginateOptions provides extra options for pagination in collections.
 type CollectionsPaginateOptions[K any] struct {
 	// Prefix allows to optionally set a prefix for the pagination.
@@ -266,7 +293,7 @@ func collFilteredPaginateByKey[K, V any, C Collection[K, V]](
 }
 
 // todo maybe move to collections?
-func encodeCollKey[K, V any](coll Collection[K, V], key K) ([]byte, error) {
+func encodeCollKey[K, V any, C Collection[K, V]](coll C, key K) ([]byte, error) {
 	buffer := make([]byte, coll.KeyCodec().Size(key))
 	_, err := coll.KeyCodec().Encode(buffer, key)
 	return buffer, err

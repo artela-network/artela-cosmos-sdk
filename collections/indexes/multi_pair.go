@@ -56,6 +56,18 @@ func (i *MultiPair[K1, K2, Value]) Iterate(ctx context.Context, ranger collectio
 	return (MultiPairIterator[K2, K1])(sIter), nil
 }
 
+func (i *MultiPair[K1, K2, Value]) IterateRaw(
+	ctx context.Context, start, end []byte, order collections.Order,
+) (
+	iter collections.Iterator[collections.Pair[K2, K1], collections.NoValue], err error,
+) {
+	return (*collections.GenericMultiIndex[K2, K1, collections.Pair[K1, K2], Value])(i).IterateRaw(ctx, start, end, order)
+}
+
+func (i *MultiPair[K1, K2, Value]) KeyCodec() codec.KeyCodec[collections.Pair[K2, K1]] {
+	return (*collections.GenericMultiIndex[K2, K1, collections.Pair[K1, K2], Value])(i).KeyCodec()
+}
+
 // MatchExact will return an iterator containing only the primary keys starting with the provided second part of the multipart pair key.
 func (i *MultiPair[K1, K2, Value]) MatchExact(ctx context.Context, key K2) (MultiPairIterator[K2, K1], error) {
 	return i.Iterate(ctx, collections.NewPrefixedPairRange[K2, K1](key))

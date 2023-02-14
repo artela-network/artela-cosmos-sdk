@@ -2,9 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
-	"os"
-
 	"cosmossdk.io/math"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -57,7 +54,6 @@ func (k BaseKeeper) AllBalances(ctx context.Context, req *types.QueryAllBalances
 		//
 		// Since: ibc-go v7
 		if req.ResolveDenom {
-			fmt.Fprintf(os.Stderr, "IBC DENOM: %s", denom)
 			if md, ok := k.GetDenomMetaData(sdkCtx, denom); ok {
 				denom = md.Display
 			}
@@ -214,48 +210,30 @@ func (k BaseKeeper) DenomOwners(
 	goCtx context.Context,
 	req *types.QueryDenomOwnersRequest,
 ) (*types.QueryDenomOwnersResponse, error) {
-	/*
-			if req == nil {
-				return nil, status.Errorf(codes.InvalidArgument, "empty request")
-			}
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 
-			if err := sdk.ValidateDenom(req.Denom); err != nil {
-				return nil, status.Error(codes.InvalidArgument, err.Error())
-			}
+	if err := sdk.ValidateDenom(req.Denom); err != nil {
+		return nil, err
+	}
 
-			ctx := sdk.UnwrapSDKContext(goCtx)
-			denomPrefixStore := k.getDenomAddressPrefixStore(ctx, req.Denom)
+	ctx := sdk.UnwrapSDKContext(goCtx)
 
-			var denomOwners []*types.DenomOwner
-			pageRes, err := query.FilteredPaginate(
-				denomPrefixStore,
-				req.Pagination,
-				func(key []byte, _ []byte, accumulate bool) (bool, error) {
-					if accumulate {
-						address, _, err := types.AddressAndDenomFromBalancesStore(key)
-						if err != nil {
-							return false, err
-						}
+	var denomOwners []*types.DenomOwner
+	pageRes, err := query.PaginatePairIndexWithPrefix(ctx, k.Balances.Indexes.Denom, req.Pagination, req.Denom,
+		func(denom string, addr sdk.AccAddress) bool {
+			denomOwners = append(denomOwners, &types.DenomOwner{
+				Address: addr.String(),
+				Balance: k.GetBalance(ctx, addr, denom),
+			})
+			return true
+		})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 
-						denomOwners = append(
-							denomOwners,
-							&types.DenomOwner{
-								Address: address.String(),
-								Balance: k.GetBalance(ctx, address, req.Denom),
-							},
-						)
-					}
-
-				return true, nil
-			},
-		)
-		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-
-			return &types.QueryDenomOwnersResponse{DenomOwners: denomOwners, Pagination: pageRes}, nil
-	*/
-	panic("impl")
+	return &types.QueryDenomOwnersResponse{DenomOwners: denomOwners, Pagination: pageRes}, nil
 }
 
 func (k BaseKeeper) SendEnabled(ctx context.Context, req *types.QuerySendEnabledRequest) (*types.QuerySendEnabledResponse, error) {
