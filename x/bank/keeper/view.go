@@ -149,7 +149,7 @@ func (k BaseViewKeeper) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom s
 // callback, iteration is halted.
 func (k BaseViewKeeper) IterateAccountBalances(ctx sdk.Context, addr sdk.AccAddress, cb func(sdk.Coin) bool) {
 	var ranger = collections.NewPrefixedPairRange[sdk.AccAddress, string](addr)
-	_ = sdk.IterateCallBackWithRange(ctx, k.Balances, ranger, func(key collections.Pair[sdk.AccAddress, string], value sdk.Int) bool {
+	_ = sdk.IterateAndCallBackWithRange(ctx, k.Balances, ranger, func(key collections.Pair[sdk.AccAddress, string], value sdk.Int) bool {
 		return cb(sdk.NewCoin(key.K2(), value))
 	})
 }
@@ -158,7 +158,7 @@ func (k BaseViewKeeper) IterateAccountBalances(ctx sdk.Context, addr sdk.AccAddr
 // denominations that are provided to a callback. If true is returned from the
 // callback, iteration is halted.
 func (k BaseViewKeeper) IterateAllBalances(ctx sdk.Context, cb func(sdk.AccAddress, sdk.Coin) bool) {
-	_ = sdk.IterateCallBack(ctx, k.Balances, func(key collections.Pair[sdk.AccAddress, string], value sdk.Int) bool {
+	_ = sdk.IterateAndCallBack(ctx, k.Balances, func(key collections.Pair[sdk.AccAddress, string], value sdk.Int) bool {
 		return cb(key.K1(), sdk.NewCoin(key.K2(), value))
 	})
 }

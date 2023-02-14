@@ -395,7 +395,7 @@ func (k BaseSendKeeper) DeleteSendEnabled(ctx sdk.Context, denoms ...string) {
 
 // IterateSendEnabledEntries iterates over all the SendEnabled entries.
 func (k BaseSendKeeper) IterateSendEnabledEntries(ctx sdk.Context, cb func(denom string, sendEnabled bool) bool) {
-	_ = sdk.IterateCallBack(ctx, k.SendEnabled, cb)
+	_ = sdk.IterateAndCallBack(ctx, k.SendEnabled, cb)
 }
 
 // GetAllSendEnabledEntries gets all the SendEnabled entries that are stored.
