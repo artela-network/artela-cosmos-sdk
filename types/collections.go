@@ -1,23 +1,26 @@
 package types
 
-import "cosmossdk.io/collections"
+import (
+	"cosmossdk.io/collections"
+	collcodec "cosmossdk.io/collections/codec"
+)
 
 var (
 	// AccAddressKey follows the same semantics of collections.BytesKey.
 	// It just uses humanised format for the String() and EncodeJSON().
-	AccAddressKey collections.KeyCodec[AccAddress] = genericAddressKey[AccAddress]{
+	AccAddressKey collcodec.KeyCodec[AccAddress] = genericAddressKey[AccAddress]{
 		stringDecoder: AccAddressFromBech32,
 		keyType:       "sdk.AccAddress",
 	}
 
 	// ValAddressKey follows the same semantics as AccAddressKey.
-	ValAddressKey collections.KeyCodec[ValAddress] = genericAddressKey[ValAddress]{
+	ValAddressKey collcodec.KeyCodec[ValAddress] = genericAddressKey[ValAddress]{
 		stringDecoder: ValAddressFromBech32,
 		keyType:       "sdk.ValAddress",
 	}
 
 	// ConsAddressKey follows the same semantics as ConsAddressKey.
-	ConsAddressKey collections.KeyCodec[ConsAddress] = genericAddressKey[ConsAddress]{
+	ConsAddressKey collcodec.KeyCodec[ConsAddress] = genericAddressKey[ConsAddress]{
 		stringDecoder: ConsAddressFromBech32,
 		keyType:       "sdk.ConsAddress",
 	}

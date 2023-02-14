@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	collcodec "cosmossdk.io/collections/codec"
 	"errors"
 	"fmt"
 
@@ -15,7 +16,7 @@ type Collection[K, V any] interface {
 	IterateRaw(ctx context.Context, start, end []byte, order collections.Order) (collections.Iterator[K, V], error)
 	// KeyCodec exposes the KeyCodec of a collection, required to encode a collection key from and to bytes
 	// for pagination request and response.
-	KeyCodec() collections.KeyCodec[K]
+	KeyCodec() collcodec.KeyCodec[K]
 }
 
 // CollectionPaginate follows the same behaviour as Paginate but works on a Collection.

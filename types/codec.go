@@ -1,7 +1,7 @@
 package types
 
 import (
-	"cosmossdk.io/collections"
+	collcodec "cosmossdk.io/collections/codec"
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -26,7 +26,7 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 // Collection Codecs
 
 // IntValue represents a collections.ValueCodec to work with Int.
-var IntValue collections.ValueCodec[math.Int] = intValueCodec{}
+var IntValue collcodec.ValueCodec[math.Int] = intValueCodec{}
 
 type intValueCodec struct{}
 
