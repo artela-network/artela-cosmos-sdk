@@ -1,9 +1,31 @@
 package types
 
 import (
+	"context"
 	"cosmossdk.io/collections"
 	collcodec "cosmossdk.io/collections/codec"
 )
+
+func IterateCallBack[K, V any, C interface {
+	Iterate(ctx context.Context, ranger collections.Ranger[K]) (collections.Iterator[K, V], error)
+}](ctx context.Context, coll C, ranger collections.Ranger[K], cb func(key K, value V) bool) error {
+	iter, err := coll.Iterate(ctx, ranger)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		kv, err := iter.KeyValue()
+		if err != nil {
+			return err
+		}
+		if cb(kv.Key, kv.Value) {
+			return nil
+		}
+	}
+	return nil
+}
 
 var (
 	// AccAddressKey follows the same semantics of collections.BytesKey.

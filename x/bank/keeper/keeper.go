@@ -244,20 +244,9 @@ func (k BaseKeeper) GetAllDenomMetaData(ctx sdk.Context) []types.Metadata {
 // provides the metadata to a callback. If true is returned from the
 // callback, iteration is halted.
 func (k BaseKeeper) IterateAllDenomMetaData(ctx sdk.Context, cb func(types.Metadata) bool) {
-	iter, err := k.BaseSendKeeper.DenomMetadata.Iterate(ctx, nil)
-	if err != nil {
-		return
-	}
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		v, err := iter.Value()
-		if err != nil {
-			return
-		}
-		if cb(v) {
-			return
-		}
-	}
+	_ = sdk.IterateCallBack(ctx, k.BaseSendKeeper.DenomMetadata, nil, func(_ string, value types.Metadata) bool {
+		return cb(value)
+	})
 }
 
 // SetDenomMetaData sets the denominations metadata
@@ -470,20 +459,7 @@ func (k BaseKeeper) trackUndelegation(ctx sdk.Context, addr sdk.AccAddress, amt 
 // with the balance of each coin.
 // The iteration stops if the callback returns true.
 func (k BaseViewKeeper) IterateTotalSupply(ctx sdk.Context, cb func(sdk.Coin) bool) {
-	// TODO(tip): since this pattern is used everywhere, make a common util function
-	iter, err := k.Supply.Iterate(ctx, nil)
-	if err != nil {
-		return
-	}
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		kv, err := iter.KeyValue()
-		if err != nil {
-			return
-		}
-		if cb(sdk.NewCoin(kv.Key, kv.Value)) {
-			return
-		}
-	}
+	_ = sdk.IterateCallBack(ctx, k.Supply, nil, func(key string, value sdk.Int) bool {
+		return cb(sdk.NewCoin(key, value))
+	})
 }

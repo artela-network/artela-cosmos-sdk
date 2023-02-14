@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
-	gogotypes "github.com/cosmos/gogoproto/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -264,11 +263,10 @@ func (k BaseKeeper) DenomOwners(
 	return &types.QueryDenomOwnersResponse{DenomOwners: denomOwners, Pagination: pageRes}, nil
 }
 
-func (k BaseKeeper) SendEnabled(goCtx context.Context, req *types.QuerySendEnabledRequest) (*types.QuerySendEnabledResponse, error) {
+func (k BaseKeeper) SendEnabled(ctx context.Context, req *types.QuerySendEnabledRequest) (*types.QuerySendEnabledResponse, error) {
 	if req == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
 	resp := &types.QuerySendEnabledResponse{}
 	if len(req.Denoms) > 0 {
 		for _, denom := range req.Denoms {
@@ -276,27 +274,20 @@ func (k BaseKeeper) SendEnabled(goCtx context.Context, req *types.QuerySendEnabl
 				resp.SendEnabled = append(resp.SendEnabled, types.NewSendEnabled(denom, se))
 			}
 		}
+		return resp, nil
 	} else {
-		store := k.getSendEnabledPrefixStore(ctx)
-		var err error
-
-		resp.Pagination, err = query.FilteredPaginate(
-			store,
-			req.Pagination,
-			func(key []byte, value []byte, accumulate bool) (bool, error) {
-				if accumulate {
-					var enabled gogotypes.BoolValue
-					k.cdc.MustUnmarshal(value, &enabled)
-
-					resp.SendEnabled = append(resp.SendEnabled, types.NewSendEnabled(string(key), enabled.Value))
-				}
-				return true, nil
-			},
-		)
+		se, pageRes, err := query.CollectionPaginate[string, bool](ctx, k.BaseSendKeeper.SendEnabled, req.Pagination)
 		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+			return nil, err
 		}
+		resp.Pagination = pageRes
+		resp.SendEnabled = make([]*types.SendEnabled, len(se))
+		for i, s := range se {
+			resp.SendEnabled[i] = &types.SendEnabled{
+				Denom:   s.Key,
+				Enabled: s.Value,
+			}
+		}
+		return resp, nil
 	}
-
-	return resp, nil
 }
