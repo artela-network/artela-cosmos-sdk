@@ -271,9 +271,8 @@ func (k BaseKeeper) SendEnabled(goCtx context.Context, req *types.QuerySendEnabl
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	resp := &types.QuerySendEnabledResponse{}
 	if len(req.Denoms) > 0 {
-		store := ctx.KVStore(k.storeKey)
 		for _, denom := range req.Denoms {
-			if se, ok := k.getSendEnabled(store, denom); ok {
+			if se, ok := k.getSendEnabled(ctx, denom); ok {
 				resp.SendEnabled = append(resp.SendEnabled, types.NewSendEnabled(denom, se))
 			}
 		}
