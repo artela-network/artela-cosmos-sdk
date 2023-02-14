@@ -2,12 +2,11 @@ package query
 
 import (
 	"context"
+	"cosmossdk.io/collections"
 	collcodec "cosmossdk.io/collections/codec"
 	storetypes "cosmossdk.io/store/types"
 	"errors"
 	"fmt"
-
-	"cosmossdk.io/collections"
 )
 
 // CollectionsPaginateOptions provides extra options for pagination in collections.
@@ -108,6 +107,10 @@ func CollectionFilteredPaginate[K, V any, C Collection[K, V]](
 	// invalid iter error is ignored to retain Paginate behaviour
 	if errors.Is(err, collections.ErrInvalidIterator) {
 		return results, pageRes, nil
+	}
+	// strip the prefix from next key
+	if len(pageRes.NextKey) != 0 && prefix != nil {
+		pageRes.NextKey = pageRes.NextKey[len(prefix):]
 	}
 	return results, pageRes, err
 }

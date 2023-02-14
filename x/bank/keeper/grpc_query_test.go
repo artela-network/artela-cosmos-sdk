@@ -117,7 +117,7 @@ func (suite *KeeperTestSuite) TestQueryAllBalances() {
 	suite.Require().NoError(err)
 	suite.Equal(res.Balances.Len(), 1)
 	suite.Equal(res.Balances[0].Denom, ibcPath+"/"+ibcBaseDenom)
-	suite.Nil(res.Pagination.NextKey)
+	suite.Nil(res.Pagination.NextKey, string(res.Pagination.NextKey))
 }
 
 func (suite *KeeperTestSuite) TestSpendableBalances() {
