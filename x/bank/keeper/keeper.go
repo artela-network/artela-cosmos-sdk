@@ -228,16 +228,12 @@ func (k BaseKeeper) HasDenomMetaData(ctx sdk.Context, denom string) bool {
 }
 
 // GetAllDenomMetaData retrieves all denominations metadata
-func (k BaseKeeper) GetAllDenomMetaData(ctx sdk.Context) []types.Metadata {
-	iter, err := k.BaseSendKeeper.DenomMetadata.Iterate(ctx, nil)
-	if err != nil {
-		return nil
-	}
-	vs, err := iter.Values()
-	if err != nil {
-		return nil
-	}
-	return vs
+func (k BaseKeeper) GetAllDenomMetaData(ctx sdk.Context) (mds []types.Metadata) {
+	k.IterateAllDenomMetaData(ctx, func(metadata types.Metadata) bool {
+		mds = append(mds, metadata)
+		return false
+	})
+	return
 }
 
 // IterateAllDenomMetaData iterates over all the denominations metadata and
