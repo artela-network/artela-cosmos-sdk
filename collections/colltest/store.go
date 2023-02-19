@@ -2,6 +2,7 @@ package colltest
 
 import (
 	"context"
+	"cosmossdk.io/collections"
 
 	"cosmossdk.io/core/store"
 	db "github.com/cosmos/cosmos-db"
@@ -9,9 +10,9 @@ import (
 
 // MockStore returns a mock store.KVStoreService and a mock context.Context.
 // They can be used to test collections.
-func MockStore() (store.KVStoreService, context.Context) {
+func MockStore() (collections.StoreProviderFunc, context.Context) {
 	kv := db.NewMemDB()
-	return &testStore{kv}, context.Background()
+	return (&testStore{kv}).OpenKVStore, context.Background()
 }
 
 type testStore struct {

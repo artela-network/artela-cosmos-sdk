@@ -28,13 +28,13 @@ func (c companyIndexes) IndexesList() []collections.Index[string, company] {
 	return []collections.Index[string, company]{c.City, c.Vat}
 }
 
-func newTestIndexedMap(schema *collections.SchemaBuilder) *collections.IndexedMap[string, company, companyIndexes] {
-	return collections.NewIndexedMap(schema, collections.NewPrefix(0), "companies", collections.StringKey, colltest.MockValueCodec[company](),
+func newTestIndexedMap(sp collections.StoreProviderFunc) *collections.IndexedMap[string, company, companyIndexes] {
+	return collections.NewIndexedMap(sp, collections.NewPrefix(0), "companies", collections.StringKey, colltest.MockValueCodec[company](),
 		companyIndexes{
-			City: collections.NewGenericMultiIndex(schema, collections.NewPrefix(1), "companies_by_city", collections.StringKey, collections.StringKey, func(pk string, value company) ([]collections.IndexReference[string, string], error) {
+			City: collections.NewGenericMultiIndex(sp, collections.NewPrefix(1), "companies_by_city", collections.StringKey, collections.StringKey, func(pk string, value company) ([]collections.IndexReference[string, string], error) {
 				return []collections.IndexReference[string, string]{collections.NewIndexReference(value.City, pk)}, nil
 			}),
-			Vat: collections.NewGenericUniqueIndex(schema, collections.NewPrefix(2), "companies_by_vat", collections.Uint64Key, collections.StringKey, func(pk string, v company) ([]collections.IndexReference[uint64, string], error) {
+			Vat: collections.NewGenericUniqueIndex(sp, collections.NewPrefix(2), "companies_by_vat", collections.Uint64Key, collections.StringKey, func(pk string, v company) ([]collections.IndexReference[uint64, string], error) {
 				return []collections.IndexReference[uint64, string]{collections.NewIndexReference(v.Vat, pk)}, nil
 			}),
 		},
@@ -42,10 +42,9 @@ func newTestIndexedMap(schema *collections.SchemaBuilder) *collections.IndexedMa
 }
 
 func TestIndexedMap(t *testing.T) {
-	sk, ctx := colltest.MockStore()
-	schema := collections.NewSchemaBuilder(sk)
+	sp, ctx := colltest.MockStore()
 
-	im := newTestIndexedMap(schema)
+	im := newTestIndexedMap(sp)
 
 	// test insertion
 	err := im.Set(ctx, "1", company{

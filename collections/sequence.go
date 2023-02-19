@@ -13,8 +13,8 @@ type Sequence Item[uint64]
 
 // NewSequence instantiates a new sequence given
 // a Schema, a Prefix and humanised name for the sequence.
-func NewSequence(schema *SchemaBuilder, prefix Prefix, name string) Sequence {
-	return (Sequence)(NewItem(schema, prefix, name, Uint64Value))
+func NewSequence(sp StoreProviderFunc, prefix Prefix, name string) Sequence {
+	return (Sequence)(NewItem(sp, prefix, name, Uint64Value))
 }
 
 // Peek returns the current sequence value, if no number

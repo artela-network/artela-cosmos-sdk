@@ -1,11 +1,16 @@
 package collections
 
 import (
+	"context"
+	"cosmossdk.io/core/store"
 	"errors"
 	"math"
 
 	"cosmossdk.io/collections/codec"
 )
+
+// StoreProviderFunc defines the function that a collection uses to fetch the KVStore.
+type StoreProviderFunc func(ctx context.Context) store.KVStore
 
 var (
 	// ErrNotFound is returned when the provided key is not present in the StorageProvider.

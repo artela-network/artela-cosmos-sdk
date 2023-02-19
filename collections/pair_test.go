@@ -25,10 +25,9 @@ func TestPair(t *testing.T) {
 }
 
 func TestPairRange(t *testing.T) {
-	sk, ctx := deps()
-	schema := NewSchemaBuilder(sk)
+	sp, ctx := deps()
 	pc := PairKeyCodec(StringKey, Uint64Key)
-	m := NewMap(schema, NewPrefix(0), "pair", pc, Uint64Value)
+	m := NewMap(sp, NewPrefix(0), "pair", pc, Uint64Value)
 
 	require.NoError(t, m.Set(ctx, Join("A", uint64(0)), 1))
 	require.NoError(t, m.Set(ctx, Join("A", uint64(1)), 0))

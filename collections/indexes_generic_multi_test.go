@@ -26,10 +26,9 @@ func TestGenericMultiIndex(t *testing.T) {
 	// From GenericMultiIndex point of view, the denom field of the array becomes
 	// the referencing key which points to the address (string), which is the key
 	// being referenced.
-	sk, ctx := deps()
-	sb := NewSchemaBuilder(sk)
+	sp, ctx := deps()
 	mi := NewGenericMultiIndex(
-		sb, NewPrefix("denoms"), "denom_to_owner", StringKey, StringKey,
+		sp, NewPrefix("denoms"), "denom_to_owner", StringKey, StringKey,
 		func(pk string, value balance) ([]IndexReference[string, string], error) {
 			// the referencing keys are all the denoms.
 			refs := make([]IndexReference[string, string], len(value.coins))

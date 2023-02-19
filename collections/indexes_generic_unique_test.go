@@ -15,10 +15,9 @@ func TestGenericUniqueIndex(t *testing.T) {
 	// Address => NFT balance.
 	// An NFT balance is represented as a slice of IDs, those IDs are unique, meaning that
 	// they can be held only by one address.
-	sk, ctx := deps()
-	sb := NewSchemaBuilder(sk)
+	sp, ctx := deps()
 	ui := NewGenericUniqueIndex(
-		sb, NewPrefix("nft_to_owner_index"), "ntf_to_owner_index", Uint64Key, StringKey,
+		sp, NewPrefix("nft_to_owner_index"), "ntf_to_owner_index", Uint64Key, StringKey,
 		func(pk string, value nftBalance) ([]IndexReference[uint64, string], error) {
 			// the referencing keys are all the NFT unique ids.
 			refs := make([]IndexReference[uint64, string], len(value.nftIDs))

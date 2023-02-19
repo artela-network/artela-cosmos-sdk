@@ -7,11 +7,8 @@ import (
 )
 
 func TestMap(t *testing.T) {
-	sk, ctx := deps()
-	schemaBuilder := NewSchemaBuilder(sk)
-	m := NewMap(schemaBuilder, NewPrefix("hi"), "m", Uint64Key, Uint64Value)
-	_, err := schemaBuilder.Build()
-	require.NoError(t, err)
+	sp, ctx := deps()
+	m := NewMap(sp, NewPrefix("hi"), "m", Uint64Key, Uint64Value)
 
 	// test not has
 	has, err := m.Has(ctx, 1)
@@ -37,14 +34,12 @@ func TestMap(t *testing.T) {
 }
 
 func TestMap_IterateRaw(t *testing.T) {
-	sk, ctx := deps()
+	sp, ctx := deps()
 	// safety check to ensure prefix boundaries are not crossed
-	require.NoError(t, sk.OpenKVStore(ctx).Set([]byte{0x0, 0x0}, []byte("before prefix")))
-	require.NoError(t, sk.OpenKVStore(ctx).Set([]byte{0x2, 0x0}, []byte("after prefix")))
+	require.NoError(t, sp(ctx).Set([]byte{0x0, 0x0}, []byte("before prefix")))
+	require.NoError(t, sp(ctx).Set([]byte{0x2, 0x0}, []byte("after prefix")))
 
-	sb := NewSchemaBuilder(sk)
-
-	m := NewMap(sb, NewPrefix(1), "m", Uint64Key, Uint64Value)
+	m := NewMap(sp, NewPrefix(1), "m", Uint64Key, Uint64Value)
 	require.NoError(t, m.Set(ctx, 0, 0))
 	require.NoError(t, m.Set(ctx, 1, 1))
 	require.NoError(t, m.Set(ctx, 2, 2))

@@ -16,12 +16,12 @@ type Item[V any] Map[noKey, V]
 // Name and prefix must be unique within the schema and name must match the format specified by NameRegex, or
 // else this method will panic.
 func NewItem[V any](
-	schema *SchemaBuilder,
+	sp StoreProviderFunc,
 	prefix Prefix,
 	name string,
 	valueCodec codec.ValueCodec[V],
 ) Item[V] {
-	item := (Item[V])(NewMap[noKey](schema, prefix, name, noKey{}, valueCodec))
+	item := (Item[V])(NewMap[noKey](sp, prefix, name, noKey{}, valueCodec))
 	return item
 }
 

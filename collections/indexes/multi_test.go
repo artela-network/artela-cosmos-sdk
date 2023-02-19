@@ -1,17 +1,22 @@
 package indexes
 
 import (
+	"cosmossdk.io/collections/colltest"
 	"testing"
 
 	"cosmossdk.io/collections"
 	"github.com/stretchr/testify/require"
 )
 
-func TestMultiIndex(t *testing.T) {
-	sk, ctx := deps()
-	schema := collections.NewSchemaBuilder(sk)
+type company struct {
+	City string
+	Vat  uint64
+}
 
-	mi := NewMulti(schema, collections.NewPrefix(1), "multi_index", collections.StringKey, collections.Uint64Key, func(_ uint64, value company) (string, error) {
+func TestMultiIndex(t *testing.T) {
+	sp, ctx := colltest.MockStore()
+
+	mi := NewMulti(sp, collections.NewPrefix(1), "multi_index", collections.StringKey, collections.Uint64Key, func(_ uint64, value company) (string, error) {
 		return value.City, nil
 	})
 

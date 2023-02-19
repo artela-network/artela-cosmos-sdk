@@ -27,7 +27,7 @@ type GenericUniqueIndex[ReferencingKey, ReferencedKey, PrimaryKey, Value any] st
 
 // NewGenericUniqueIndex instantiates a GenericUniqueIndex. Works in the same way as NewGenericMultiIndex.
 func NewGenericUniqueIndex[ReferencingKey, ReferencedKey, PrimaryKey, Value any](
-	schema *SchemaBuilder,
+	sp StoreProviderFunc,
 	prefix Prefix,
 	name string,
 	referencingKeyCodec codec.KeyCodec[ReferencingKey],
@@ -35,7 +35,7 @@ func NewGenericUniqueIndex[ReferencingKey, ReferencedKey, PrimaryKey, Value any]
 	getRefs func(pk PrimaryKey, value Value) ([]IndexReference[ReferencingKey, ReferencedKey], error),
 ) *GenericUniqueIndex[ReferencingKey, ReferencedKey, PrimaryKey, Value] {
 	return &GenericUniqueIndex[ReferencingKey, ReferencedKey, PrimaryKey, Value]{
-		refs:    NewMap[ReferencingKey, ReferencedKey](schema, prefix, name, referencingKeyCodec, codec.KeyToValueCodec(referencedKeyCodec)),
+		refs:    NewMap[ReferencingKey, ReferencedKey](sp, prefix, name, referencingKeyCodec, codec.KeyToValueCodec(referencedKeyCodec)),
 		getRefs: getRefs,
 	}
 }

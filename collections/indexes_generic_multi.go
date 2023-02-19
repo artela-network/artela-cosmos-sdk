@@ -51,7 +51,7 @@ type GenericMultiIndex[ReferencingKey, ReferencedKey, PrimaryKey, Value any] str
 // for example when the Value has an array field, and we want to create a relationship
 // between the object and all the elements of the array contained in the object.
 func NewGenericMultiIndex[ReferencingKey, ReferencedKey, PrimaryKey, Value any](
-	schema *SchemaBuilder,
+	sp StoreProviderFunc,
 	prefix Prefix,
 	name string,
 	referencingKeyCodec codec.KeyCodec[ReferencingKey],
@@ -60,7 +60,7 @@ func NewGenericMultiIndex[ReferencingKey, ReferencedKey, PrimaryKey, Value any](
 ) *GenericMultiIndex[ReferencingKey, ReferencedKey, PrimaryKey, Value] {
 	return &GenericMultiIndex[ReferencingKey, ReferencedKey, PrimaryKey, Value]{
 		getRefs: getRefsFunc,
-		refs:    NewKeySet(schema, prefix, name, PairKeyCodec(referencingKeyCodec, referencedKeyCodec)),
+		refs:    NewKeySet(sp, prefix, name, PairKeyCodec(referencingKeyCodec, referencedKeyCodec)),
 	}
 }
 

@@ -2,38 +2,14 @@ package collections
 
 import (
 	"context"
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/core/store"
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"regexp"
 	"sort"
 	"strings"
-
-	"cosmossdk.io/core/appmodule"
-
-	"cosmossdk.io/core/store"
-
-	"github.com/hashicorp/go-multierror"
 )
-
-// SchemaBuilder is used for building schemas. The Build method should always
-// be called after all collections have been initialized. Initializing new
-// collections with the builder after initialization will result in panics.
-type SchemaBuilder struct {
-	schema *Schema
-	err    *multierror.Error
-}
-
-// NewSchemaBuilder creates a new schema builder from the provided store key.
-// Callers should always call the SchemaBuilder.Build method when they are
-// done adding collections to the schema.
-func NewSchemaBuilder(service store.KVStoreService) *SchemaBuilder {
-	return &SchemaBuilder{
-		schema: &Schema{
-			storeAccessor:       service.OpenKVStore,
-			collectionsByName:   map[string]collection{},
-			collectionsByPrefix: map[string]collection{},
-		},
-	}
-}
 
 // Build should be called after all collections that are part of the schema
 // have been initialized in order to get a reference to the Schema. It is
@@ -274,4 +250,8 @@ func (s Schema) getCollection(name string) (collection, error) {
 		return nil, fmt.Errorf("unknown collection: %s", name)
 	}
 	return coll, nil
+}
+
+func RegisterSchema(schema *Schema, collections ...interface{ registerSchema() }) {
+
 }

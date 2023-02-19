@@ -26,7 +26,7 @@ type Map[K, V any] struct {
 // Name and prefix must be unique within the schema and name must match the format specified by NameRegex, or
 // else this method will panic.
 func NewMap[K, V any](
-	schemaBuilder *SchemaBuilder,
+	sp StoreProviderFunc,
 	prefix Prefix,
 	name string,
 	keyCodec codec.KeyCodec[K],
@@ -35,11 +35,10 @@ func NewMap[K, V any](
 	m := Map[K, V]{
 		kc:     keyCodec,
 		vc:     valueCodec,
-		sa:     schemaBuilder.schema.storeAccessor,
+		sa:     sp,
 		prefix: prefix.Bytes(),
 		name:   name,
 	}
-	schemaBuilder.addCollection(m)
 	return m
 }
 

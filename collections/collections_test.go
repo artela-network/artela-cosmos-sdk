@@ -45,9 +45,9 @@ func (t testStore) ReverseIterator(start, end []byte) (store.Iterator, error) {
 
 var _ store.KVStore = testStore{}
 
-func deps() (store.KVStoreService, context.Context) {
+func deps() (StoreProviderFunc, context.Context) {
 	kv := db.NewMemDB()
-	return &testStore{kv}, context.Background()
+	return (&testStore{kv}).OpenKVStore, context.Background()
 }
 
 func TestPrefix(t *testing.T) {

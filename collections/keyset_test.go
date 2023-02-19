@@ -7,9 +7,8 @@ import (
 )
 
 func TestKeySet(t *testing.T) {
-	sk, ctx := deps()
-	schema := NewSchemaBuilder(sk)
-	ks := NewKeySet(schema, NewPrefix("keyset"), "keyset", StringKey)
+	sp, ctx := deps()
+	ks := NewKeySet(sp, NewPrefix("keyset"), "keyset", StringKey)
 
 	// set
 	require.NoError(t, ks.Set(ctx, "A"))

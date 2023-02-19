@@ -17,7 +17,7 @@ type Multi[ReferenceKey, PrimaryKey, Value any] collections.GenericMultiIndex[Re
 // and the primary key key codec. The getRefKeyFunc is a function that
 // given the primary key and value returns the referencing key.
 func NewMulti[ReferenceKey, PrimaryKey, Value any](
-	schema *collections.SchemaBuilder,
+	sp collections.StoreProviderFunc,
 	prefix collections.Prefix,
 	name string,
 	refCodec codec.KeyCodec[ReferenceKey],
@@ -25,7 +25,7 @@ func NewMulti[ReferenceKey, PrimaryKey, Value any](
 	getRefKeyFunc func(pk PrimaryKey, value Value) (ReferenceKey, error),
 ) *Multi[ReferenceKey, PrimaryKey, Value] {
 	i := collections.NewGenericMultiIndex(
-		schema, prefix, name, refCodec, pkCodec,
+		sp, prefix, name, refCodec, pkCodec,
 		func(pk PrimaryKey, value Value) ([]collections.IndexReference[ReferenceKey, PrimaryKey], error) {
 			ref, err := getRefKeyFunc(pk, value)
 			if err != nil {

@@ -1,6 +1,7 @@
 package indexes
 
 import (
+	"cosmossdk.io/collections/colltest"
 	"testing"
 
 	"cosmossdk.io/collections"
@@ -8,9 +9,8 @@ import (
 )
 
 func TestUniqueIndex(t *testing.T) {
-	sk, ctx := deps()
-	schema := collections.NewSchemaBuilder(sk)
-	ui := NewUnique(schema, collections.NewPrefix("unique_index"), "unique_index", collections.Uint64Key, collections.Uint64Key, func(_ uint64, v company) (uint64, error) {
+	sp, ctx := colltest.MockStore()
+	ui := NewUnique(sp, collections.NewPrefix("unique_index"), "unique_index", collections.Uint64Key, collections.Uint64Key, func(_ uint64, v company) (uint64, error) {
 		return v.Vat, nil
 	})
 

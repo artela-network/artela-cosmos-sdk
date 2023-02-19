@@ -13,14 +13,14 @@ type Unique[ReferenceKey, PrimaryKey, Value any] collections.GenericUniqueIndex[
 
 // NewUnique instantiates a new Unique index.
 func NewUnique[ReferenceKey, PrimaryKey, Value any](
-	schema *collections.SchemaBuilder,
+	sp collections.StoreProviderFunc,
 	prefix collections.Prefix,
 	name string,
 	refCodec codec.KeyCodec[ReferenceKey],
 	pkCodec codec.KeyCodec[PrimaryKey],
 	getRefKeyFunc func(pk PrimaryKey, v Value) (ReferenceKey, error),
 ) *Unique[ReferenceKey, PrimaryKey, Value] {
-	i := collections.NewGenericUniqueIndex(schema, prefix, name, refCodec, pkCodec, func(pk PrimaryKey, value Value) ([]collections.IndexReference[ReferenceKey, PrimaryKey], error) {
+	i := collections.NewGenericUniqueIndex(sp, prefix, name, refCodec, pkCodec, func(pk PrimaryKey, value Value) ([]collections.IndexReference[ReferenceKey, PrimaryKey], error) {
 		ref, err := getRefKeyFunc(pk, value)
 		if err != nil {
 			return nil, err

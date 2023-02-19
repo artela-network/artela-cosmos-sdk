@@ -14,8 +14,8 @@ type KeySet[K any] Map[K, NoValue]
 
 // NewKeySet returns a KeySet given a Schema, Prefix a human name for the collection
 // and a KeyCodec for the key K.
-func NewKeySet[K any](schema *SchemaBuilder, prefix Prefix, name string, keyCodec codec.KeyCodec[K]) KeySet[K] {
-	return (KeySet[K])(NewMap(schema, prefix, name, keyCodec, noValueCodec))
+func NewKeySet[K any](sp StoreProviderFunc, prefix Prefix, name string, keyCodec codec.KeyCodec[K]) KeySet[K] {
+	return (KeySet[K])(NewMap(sp, prefix, name, keyCodec, noValueCodec))
 }
 
 // Set adds the key to the KeySet. Errors on encoding problems.

@@ -8,14 +8,11 @@ import (
 )
 
 func TestIteratorBasic(t *testing.T) {
-	sk, ctx := deps()
+	sp, ctx := deps()
 	// safety check to ensure that iteration does not cross prefix boundaries
-	sk.OpenKVStore(ctx).Set([]byte{0, 0}, []byte("before prefix"))
-	sk.OpenKVStore(ctx).Set([]byte{2, 1}, []byte("after prefix"))
-	schemaBuilder := NewSchemaBuilder(sk)
-	m := NewMap(schemaBuilder, NewPrefix(1), "m", StringKey, Uint64Value)
-	_, err := schemaBuilder.Build()
-	require.NoError(t, err)
+	require.NoError(t, sp(ctx).Set([]byte{0, 0}, []byte("before prefix")))
+	require.NoError(t, sp(ctx).Set([]byte{2, 1}, []byte("after prefix")))
+	m := NewMap(sp, NewPrefix(1), "m", StringKey, Uint64Value)
 
 	for i := uint64(1); i <= 2; i++ {
 		require.NoError(t, m.Set(ctx, fmt.Sprintf("%d", i), i))
@@ -60,11 +57,8 @@ func TestIteratorBasic(t *testing.T) {
 }
 
 func TestIteratorKeyValues(t *testing.T) {
-	sk, ctx := deps()
-	schemaBuilder := NewSchemaBuilder(sk)
-	m := NewMap(schemaBuilder, NewPrefix("some super amazing prefix"), "m", StringKey, Uint64Value)
-	_, err := schemaBuilder.Build()
-	require.NoError(t, err)
+	sp, ctx := deps()
+	m := NewMap(sp, NewPrefix("some super amazing prefix"), "m", StringKey, Uint64Value)
 
 	for i := uint64(0); i <= 5; i++ {
 		require.NoError(t, m.Set(ctx, fmt.Sprintf("%d", i), i))
@@ -109,11 +103,8 @@ func TestIteratorKeyValues(t *testing.T) {
 }
 
 func TestIteratorPrefixing(t *testing.T) {
-	sk, ctx := deps()
-	schemaBuilder := NewSchemaBuilder(sk)
-	m := NewMap(schemaBuilder, NewPrefix("cool"), "cool", StringKey, Uint64Value)
-	_, err := schemaBuilder.Build()
-	require.NoError(t, err)
+	sp, ctx := deps()
+	m := NewMap(sp, NewPrefix("cool"), "cool", StringKey, Uint64Value)
 
 	require.NoError(t, m.Set(ctx, "A1", 11))
 	require.NoError(t, m.Set(ctx, "A2", 12))
@@ -127,11 +118,8 @@ func TestIteratorPrefixing(t *testing.T) {
 }
 
 func TestIteratorRanging(t *testing.T) {
-	sk, ctx := deps()
-	schemaBuilder := NewSchemaBuilder(sk)
-	m := NewMap(schemaBuilder, NewPrefix("cool"), "cool", Uint64Key, Uint64Value)
-	_, err := schemaBuilder.Build()
-	require.NoError(t, err)
+	sp, ctx := deps()
+	m := NewMap(sp, NewPrefix("cool"), "cool", Uint64Key, Uint64Value)
 
 	for i := uint64(0); i <= 7; i++ {
 		require.NoError(t, m.Set(ctx, i, i))
@@ -164,18 +152,15 @@ func TestIteratorRanging(t *testing.T) {
 }
 
 func TestWalk(t *testing.T) {
-	sk, ctx := deps()
-	schemaBuilder := NewSchemaBuilder(sk)
-	m := NewMap(schemaBuilder, NewPrefix("cool"), "cool", Uint64Key, Uint64Value)
-	_, err := schemaBuilder.Build()
-	require.NoError(t, err)
+	sp, ctx := deps()
+	m := NewMap(sp, NewPrefix("cool"), "cool", Uint64Key, Uint64Value)
 
 	for i := uint64(0); i <= 7; i++ {
 		require.NoError(t, m.Set(ctx, i, i))
 	}
 
 	u := uint64(0)
-	err = m.Walk(ctx, nil, func(key uint64, value uint64) bool {
+	err := m.Walk(ctx, nil, func(key uint64, value uint64) bool {
 		if key == 5 {
 			return true
 		}

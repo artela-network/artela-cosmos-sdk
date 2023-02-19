@@ -1,6 +1,7 @@
 package indexes
 
 import (
+	"cosmossdk.io/collections/colltest"
 	"testing"
 
 	"cosmossdk.io/collections"
@@ -24,20 +25,19 @@ func (b balanceIndex) IndexesList() []collections.Index[collections.Pair[Address
 }
 
 func TestMultiPair(t *testing.T) {
-	sk, ctx := deps()
-	sb := collections.NewSchemaBuilder(sk)
+	sp, ctx := colltest.MockStore()
 	// we create an indexed map that maps balances, which are saved as
 	// key: Pair[Address, Denom]
 	// value: Amount
 	keyCodec := collections.PairKeyCodec(collections.StringKey, collections.StringKey)
 
 	indexedMap := collections.NewIndexedMap(
-		sb,
+		sp,
 		collections.NewPrefix("balances"), "balances",
 		keyCodec,
 		collections.Uint64Value,
 		balanceIndex{
-			Denom: NewMultiPair[Amount](sb, collections.NewPrefix("denom_index"), "denom_index", keyCodec),
+			Denom: NewMultiPair[Amount](sp, collections.NewPrefix("denom_index"), "denom_index", keyCodec),
 		},
 	)
 

@@ -90,12 +90,11 @@ type testFixture struct {
 }
 
 func initFixture(t *testing.T) *testFixture {
-	sk, ctx := deps()
-	schemaBuilder := NewSchemaBuilder(sk)
-	m := NewMap(schemaBuilder, NewPrefix(1), "map", StringKey, Uint64Value)
-	i := NewItem(schemaBuilder, NewPrefix(2), "item", StringValue)
-	s := NewSequence(schemaBuilder, NewPrefix(3), "sequence")
-	ks := NewKeySet(schemaBuilder, NewPrefix(4), "key_set", StringKey)
+	sp, ctx := deps()
+	m := NewMap(sp, NewPrefix(1), "map", StringKey, Uint64Value)
+	i := NewItem(sp, NewPrefix(2), "item", StringValue)
+	s := NewSequence(sp, NewPrefix(3), "sequence")
+	ks := NewKeySet(sp, NewPrefix(4), "key_set", StringKey)
 	schema, err := schemaBuilder.Build()
 	require.NoError(t, err)
 	return &testFixture{

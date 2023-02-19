@@ -45,7 +45,7 @@ type IndexedMap[PrimaryKey, Value any, Idx Indexes[PrimaryKey, Value]] struct {
 // the value codec which is what the IndexedMap uses to encode the value.
 // Then it expects the initialised indexes.
 func NewIndexedMap[PrimaryKey, Value any, Idx Indexes[PrimaryKey, Value]](
-	schema *SchemaBuilder,
+	sp StoreProviderFunc,
 	prefix Prefix,
 	name string,
 	pkCodec codec.KeyCodec[PrimaryKey],
@@ -54,7 +54,7 @@ func NewIndexedMap[PrimaryKey, Value any, Idx Indexes[PrimaryKey, Value]](
 ) *IndexedMap[PrimaryKey, Value, Idx] {
 	return &IndexedMap[PrimaryKey, Value, Idx]{
 		Indexes: indexes,
-		m:       NewMap(schema, prefix, name, pkCodec, valueCodec),
+		m:       NewMap(sp, prefix, name, pkCodec, valueCodec),
 	}
 }
 

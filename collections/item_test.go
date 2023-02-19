@@ -7,14 +7,11 @@ import (
 )
 
 func TestItem(t *testing.T) {
-	sk, ctx := deps()
-	schemaBuilder := NewSchemaBuilder(sk)
-	item := NewItem(schemaBuilder, NewPrefix("item"), "item", Uint64Value)
-	_, err := schemaBuilder.Build()
-	require.NoError(t, err)
+	sp, ctx := deps()
+	item := NewItem(sp, NewPrefix("item"), "item", Uint64Value)
 
 	// set
-	err = item.Set(ctx, 1000)
+	err := item.Set(ctx, 1000)
 	require.NoError(t, err)
 
 	// get
