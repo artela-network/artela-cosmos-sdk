@@ -3891,10 +3891,10 @@ const (
 
 // MsgSend represents a message to send coins from one account to another.
 type MsgSend struct {
-	//state         protoimpl.MessageState
-	//sizeCache     protoimpl.SizeCache
-	//unknownFields protoimpl.UnknownFields
-	//
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
 	FromAddress string          `protobuf:"bytes,1,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`
 	ToAddress   string          `protobuf:"bytes,2,opt,name=to_address,json=toAddress,proto3" json:"to_address,omitempty"`
 	Amount      []*v1beta1.Coin `protobuf:"bytes,3,rep,name=amount,proto3" json:"amount,omitempty"`
