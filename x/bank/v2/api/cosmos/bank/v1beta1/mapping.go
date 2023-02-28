@@ -4,7 +4,7 @@ package bankv1beta1
 
 import basev1beta1 "github.com/cosmos/cosmos-sdk/x/bank/v2/api/cosmos/base/v1beta1"
 
-type ConvertibleMsgSend struct {
+type PrimitiveMsgSend struct {
 	FromAddress string
 	ToAddress   string
 	Amount      []struct {
@@ -13,8 +13,8 @@ type ConvertibleMsgSend struct {
 	}
 }
 
-func (msg *MsgSend) ToConvertible() *ConvertibleMsgSend {
-	c := &ConvertibleMsgSend{
+func (msg *MsgSend) ToPrimitive() *PrimitiveMsgSend {
+	c := &PrimitiveMsgSend{
 		FromAddress: msg.FromAddress,
 		ToAddress:   msg.ToAddress,
 	}
@@ -25,7 +25,7 @@ func (msg *MsgSend) ToConvertible() *ConvertibleMsgSend {
 	return c
 }
 
-func (c *ConvertibleMsgSend) ToMsgSend() (msg *MsgSend) {
+func (c *PrimitiveMsgSend) ToMsgSend() (msg *MsgSend) {
 	msg.FromAddress = c.FromAddress
 	msg.ToAddress = c.ToAddress
 	var amounts []*basev1beta1.Coin
@@ -36,9 +36,9 @@ func (c *ConvertibleMsgSend) ToMsgSend() (msg *MsgSend) {
 	return msg
 }
 
-type ConvertibleMsgSendResponse struct{}
+type PrimitiveMsgSendResponse struct{}
 
-func (res *MsgSendResponse) ToConvertible() *ConvertibleMsgSendResponse {
-	up := &ConvertibleMsgSendResponse{}
+func (res *MsgSendResponse) ToPrimitive() *PrimitiveMsgSendResponse {
+	up := &PrimitiveMsgSendResponse{}
 	return up
 }

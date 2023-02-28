@@ -4,7 +4,7 @@ package bankv1beta1
 
 import basev1beta1 "github.com/cosmos/cosmos-sdk/x/router/api/cosmos/base/v1beta1"
 
-type ConvertibleMsgSend struct {
+type PrimitiveMsgSend struct {
 	FromAddress string
 	ToAddress   string
 	Amount      []struct {
@@ -14,8 +14,8 @@ type ConvertibleMsgSend struct {
 	Memo string
 }
 
-func (msg *MsgSend) ToConvertible() *ConvertibleMsgSend {
-	up := &ConvertibleMsgSend{
+func (msg *MsgSend) ToPrimitive() *PrimitiveMsgSend {
+	up := &PrimitiveMsgSend{
 		FromAddress: msg.FromAddress,
 		ToAddress:   msg.ToAddress,
 		Memo:        msg.Memo,
@@ -27,7 +27,7 @@ func (msg *MsgSend) ToConvertible() *ConvertibleMsgSend {
 	return up
 }
 
-func (c *ConvertibleMsgSend) ToMsgSend() (msg *MsgSend) {
+func (c *PrimitiveMsgSend) ToMsgSend() (msg *MsgSend) {
 	msg.FromAddress = c.FromAddress
 	msg.ToAddress = c.ToAddress
 	msg.Memo = c.Memo
@@ -39,13 +39,13 @@ func (c *ConvertibleMsgSend) ToMsgSend() (msg *MsgSend) {
 	return msg
 }
 
-type ConvertibleMsgSendResponse struct{}
+type PrimitiveMsgSendResponse struct{}
 
-func (res *MsgSendResponse) ToConvertible() *ConvertibleMsgSendResponse {
-	up := &ConvertibleMsgSendResponse{}
+func (res *MsgSendResponse) ToPrimitive() *PrimitiveMsgSendResponse {
+	up := &PrimitiveMsgSendResponse{}
 	return up
 }
 
-func (c *ConvertibleMsgSendResponse) ToMsgSendResponse() (res *MsgSendResponse) {
+func (c *PrimitiveMsgSendResponse) ToMsgSendResponse() (res *MsgSendResponse) {
 	return res
 }
