@@ -3,6 +3,7 @@ package bank
 import (
 	"context"
 	router "cosmossdk.io/x/router/api/cosmos/bank/v1beta1"
+	"fmt"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/v2/api/cosmos/bank/v1beta1"
 )
 
@@ -11,9 +12,26 @@ type msgServer struct {
 	bankServer bank.MsgServer
 }
 
+// This could all be generated with a hook for the overrides to handle past module versions
+
 func (m msgServer) Send(ctx context.Context, send *router.MsgSend) (*router.MsgSendResponse, error) {
 	c := send.ToConvertible()
-	c2 := (*bank.ConvertibleMsgSend)(c)
+
+	// we've advanced the API but a user has decided to hold bank back.  The user receives a compile time error
+	// and must correct it. In this case the author decides it's OK to throw away the content of the memo field
+	// if its empty, but error if it's not empty.
+
+	// c2 := (*bank.ConvertibleMsgSend)(c)
+
+	if c.Memo != "" {
+		return nil, fmt.Errorf("memo field is not empty and bank is held back")
+	}
+
+	c2 := bank.ConvertibleMsgSend{FromAddress: c.FromAddress,
+		ToAddress: c.ToAddress,
+		Amount:    c.Amount,
+	}
+
 	send2 := c2.ToMsgSend()
 	res, err := m.bankServer.Send(ctx, send2)
 	if err != nil {
