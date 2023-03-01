@@ -25,7 +25,7 @@ func (msg *MsgSend) ToPrimitive() *PrimitiveMsgSend {
 	return c
 }
 
-func (c *PrimitiveMsgSend) ToMsgSend() (msg *MsgSend) {
+func (c *PrimitiveMsgSend) FromPrimitive() (msg *MsgSend) {
 	msg.FromAddress = c.FromAddress
 	msg.ToAddress = c.ToAddress
 	var amounts []*basev1beta1.Coin

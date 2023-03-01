@@ -11,14 +11,14 @@ type msgServer struct {
 	bankServer bank.MsgServer
 }
 
-// This could all be generated with a hook for the overrides to handle past module versions
+// boiler plate glue code, default implementation and happy path.
 
 func (m msgServer) Send(ctx context.Context, send *router.MsgSend) (*router.MsgSendResponse, error) {
 	c := send.ToPrimitive()
 
 	c2 := (*bank.PrimitiveMsgSend)(c)
 
-	send2 := c2.ToMsgSend()
+	send2 := c2.FromPrimitive()
 	res, err := m.bankServer.Send(ctx, send2)
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func (m msgServer) Send(ctx context.Context, send *router.MsgSend) (*router.MsgS
 	cRes := res.ToPrimitive()
 	res2 := (*router.PrimitiveMsgSendResponse)(cRes)
 
-	return res2.ToMsgSendResponse(), nil
+	return res2.FromPrimitive(), nil
 }
 
 func (m msgServer) MultiSend(ctx context.Context, send *router.MsgMultiSend) (*router.MsgMultiSendResponse, error) {
