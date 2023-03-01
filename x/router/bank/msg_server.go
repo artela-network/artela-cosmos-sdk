@@ -3,6 +3,7 @@ package bank
 import (
 	"context"
 	router "cosmossdk.io/x/router/api/cosmos/bank/v1beta1"
+	"fmt"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/v2/api/cosmos/bank/v1beta1"
 )
 
@@ -12,11 +13,27 @@ type msgServer struct {
 }
 
 // boiler plate glue code, default implementation and happy path.
+//
+// this implementation surfaces state machine breaking (non proto-breaking) changes as compile time errors.
+//
+// an alternative approach could be a deep copy from proto.Message -> proto.Message which errors on unknown fields
+// with a test suite exercising every message type in the SDK.
 
 func (m msgServer) Send(ctx context.Context, send *router.MsgSend) (*router.MsgSendResponse, error) {
 	c := send.ToPrimitive()
 
-	c2 := (*bank.PrimitiveMsgSend)(c)
+	//c2 := (*bank.PrimitiveMsgSend)(c)
+	// since I have decided to hold bank back, I make a special case for the memo field
+
+	if send.Memo != "" {
+		return nil, fmt.Errorf("memo not supported, bank is held back")
+	}
+
+	c2 := &bank.PrimitiveMsgSend{
+		FromAddress: c.FromAddress,
+		ToAddress:   c.ToAddress,
+		Amount:      c.Amount,
+	}
 
 	send2 := c2.FromPrimitive()
 	res, err := m.bankServer.Send(ctx, send2)

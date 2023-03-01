@@ -51,6 +51,7 @@ message MsgSend {
     (amino.encoding)         = "legacy_coins",
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
+  string memo = 4;
 }
 
 // MsgSendResponse defines the Msg/Send response type.
