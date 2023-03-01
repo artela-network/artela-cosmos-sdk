@@ -9,14 +9,12 @@ type PrimitiveMsgSend struct {
 		Denom  string
 		Amount string
 	}
-	Memo string
 }
 
 func (msg *MsgSend) ToPrimitive() *PrimitiveMsgSend {
 	up := &PrimitiveMsgSend{
 		FromAddress: msg.FromAddress,
 		ToAddress:   msg.ToAddress,
-		Memo:        msg.Memo,
 	}
 	var amounts []struct{ Denom, Amount string }
 	for _, a := range msg.Amount {

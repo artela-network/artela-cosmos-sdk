@@ -22,8 +22,8 @@ type msgServer struct {
 func (m msgServer) Send(ctx context.Context, send *router.MsgSend) (*router.MsgSendResponse, error) {
 	c := send.ToPrimitive()
 
-	//c2 := (*bank.PrimitiveMsgSend)(c)
-	// since I have decided to hold bank back, I make a special case for the memo field
+	// c2 := (*bank.PrimitiveMsgSend)(c)
+	// bank ahead of router, I've decided that a default empty value is OK.
 
 	if send.Memo != "" {
 		return nil, fmt.Errorf("memo not supported, bank is held back")
@@ -33,6 +33,7 @@ func (m msgServer) Send(ctx context.Context, send *router.MsgSend) (*router.MsgS
 		FromAddress: c.FromAddress,
 		ToAddress:   c.ToAddress,
 		Amount:      c.Amount,
+		Memo:        "",
 	}
 
 	send2 := c2.FromPrimitive()
