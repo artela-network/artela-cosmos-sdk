@@ -16,6 +16,15 @@ var (
 	_ Iterator = (*PriorityNonceIterator)(nil)
 )
 
+type LessThan interface {
+	LessThan(rhs LessThan) int
+}
+
+type Comparable interface {
+	comparable
+	LessThan
+}
+
 // PriorityNonceMempool is a mempool implementation that stores txs
 // in a partially ordered set by 2 dimensions: priority, and sender-nonce
 // (sequence number). Internally it uses one priority ordered skip list and one
@@ -23,67 +32,36 @@ var (
 // are multiple txs from the same sender, they are not always comparable by
 // priority to other sender txs and must be partially ordered by both sender-nonce
 // and priority.
-type PriorityNonceMempool struct {
+type PriorityNonceMempool[P Comparable] struct {
 	priorityIndex  *skiplist.SkipList
-	priorityCounts map[int64]int
+	priorityCounts map[P]int
 	senderIndices  map[string]*skiplist.SkipList
-	scores         map[txMeta]txMeta
+	scores         map[txMeta[P]]txMeta[P]
 	onRead         func(tx sdk.Tx)
-	txReplacement  func(op, np int64, oTx, nTx sdk.Tx) bool
+	txReplacement  func(op, np P, oTx, nTx sdk.Tx) bool
 	maxTx          int
 }
 
-type PriorityNonceIterator struct {
+type PriorityNonceIterator[P Comparable] struct {
 	senderCursors map[string]*skiplist.Element
-	nextPriority  int64
+	nextPriority  P
 	sender        string
 	priorityNode  *skiplist.Element
-	mempool       *PriorityNonceMempool
+	mempool       *PriorityNonceMempool[P]
 }
 
 // txMeta stores transaction metadata used in indices
-type txMeta struct {
+type txMeta[P comparable] struct {
 	// nonce is the sender's sequence number
 	nonce uint64
 	// priority is the transaction's priority
-	priority int64
+	priority P
 	// sender is the transaction's sender
 	sender string
 	// weight is the transaction's weight, used as a tiebreaker for transactions with the same priority
-	weight int64
+	weight P
 	// senderElement is a pointer to the transaction's element in the sender index
 	senderElement *skiplist.Element
-}
-
-// txMetaLess is a comparator for txKeys that first compares priority, then weight,
-// then sender, then nonce, uniquely identifying a transaction.
-//
-// Note, txMetaLess is used as the comparator in the priority index.
-func txMetaLess(a, b any) int {
-	keyA := a.(txMeta)
-	keyB := b.(txMeta)
-	res := skiplist.Int64.Compare(keyA.priority, keyB.priority)
-	if res != 0 {
-		return res
-	}
-
-	// Weight is used as a tiebreaker for transactions with the same priority.
-	// Weight is calculated in a single pass in .Select(...) and so will be 0
-	// on .Insert(...).
-	res = skiplist.Int64.Compare(keyA.weight, keyB.weight)
-	if res != 0 {
-		return res
-	}
-
-	// Because weight will be 0 on .Insert(...), we must also compare sender and
-	// nonce to resolve priority collisions. If we didn't then transactions with
-	// the same priority would overwrite each other in the priority index.
-	res = skiplist.String.Compare(keyA.sender, keyB.sender)
-	if res != 0 {
-		return res
-	}
-
-	return skiplist.Uint64.Compare(keyA.nonce, keyB.nonce)
 }
 
 type PriorityNonceMempoolOption func(*PriorityNonceMempool)
@@ -124,12 +102,43 @@ func DefaultPriorityMempool() Mempool {
 
 // NewPriorityMempool returns the SDK's default mempool implementation which
 // returns txs in a partial order by 2 dimensions; priority, and sender-nonce.
-func NewPriorityMempool(opts ...PriorityNonceMempoolOption) *PriorityNonceMempool {
-	mp := &PriorityNonceMempool{
+func NewPriorityMempool[P Comparable](opts ...PriorityNonceMempoolOption) *PriorityNonceMempool[P] {
+	// txMetaLess is a comparator for txKeys that first compares priority, then weight,
+	// then sender, then nonce, uniquely identifying a transaction.
+	//
+	// Note, txMetaLess is used as the comparator in the priority index.
+	txMetaLess := func(a, b any) int {
+		keyA := a.(txMeta[P])
+		keyB := b.(txMeta[P])
+
+		res := keyA.priority.LessThan(keyB.priority)
+		if res != 0 {
+			return res
+		}
+
+		// Weight is used as a tiebreaker for transactions with the same priority.
+		// Weight is calculated in a single pass in .Select(...) and so will be 0
+		// on .Insert(...).
+		res = keyA.weight.LessThan(keyB.weight)
+		if res != 0 {
+			return res
+		}
+
+		// Because weight will be 0 on .Insert(...), we must also compare sender and
+		// nonce to resolve priority collisions. If we didn't then transactions with
+		// the same priority would overwrite each other in the priority index.
+		res = skiplist.String.Compare(keyA.sender, keyB.sender)
+		if res != 0 {
+			return res
+		}
+
+		return skiplist.Uint64.Compare(keyA.nonce, keyB.nonce)
+	}
+	mp := &PriorityNonceMempool[P]{
 		priorityIndex:  skiplist.New(skiplist.LessThanFunc(txMetaLess)),
-		priorityCounts: make(map[int64]int),
+		priorityCounts: make(map[P]int),
 		senderIndices:  make(map[string]*skiplist.SkipList),
-		scores:         make(map[txMeta]txMeta),
+		scores:         make(map[txMeta[P]]txMeta[P]),
 	}
 
 	for _, opt := range opts {
