@@ -213,6 +213,8 @@ func ProvideAddressCodec(config *modulev1.Module) address.Codec {
 type AuthInputs struct {
 	depinject.In
 
+
+	
 	Config *modulev1.Module
 	Key    *store.KVStoreKey
 	Cdc    codec.Codec

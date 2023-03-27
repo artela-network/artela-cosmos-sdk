@@ -15,6 +15,7 @@ import (
 
 var (
 	_ sdk.Msg                       = &MsgSubmitEvidence{}
+	_ sdk.Msg                       = &Equivocation{}
 	_ legacytx.LegacyMsg            = &MsgSubmitEvidence{}
 	_ types.UnpackInterfacesMessage = MsgSubmitEvidence{}
 	_ exported.MsgSubmitEvidenceI   = &MsgSubmitEvidence{}
@@ -51,6 +52,9 @@ func (m MsgSubmitEvidence) ValidateBasic() error {
 
 	return nil
 }
+
+
+func (e Equivocation) GetSigners() []sdk.AccAddress { return []sdk.AccAddress{} }
 
 // GetSignBytes returns the raw bytes a signer is expected to sign when submitting
 // a MsgSubmitEvidence message.
