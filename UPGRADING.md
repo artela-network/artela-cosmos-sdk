@@ -62,6 +62,26 @@ The `gogoproto.goproto_stringer = false` annotation has been removed from most p
 Previously, all modules were required to be set in `OrderBeginBlockers`, `OrderEndBlockers` and `OrderInitGenesis / OrderExportGenesis` in `app.go` / `app_config.go`.
 This is no longer the case, the assertion has been loosened to only require modules implementing, respectively, the `module.BeginBlockAppModule`, `module.EndBlockAppModule` and `module.HasGenesis` interfaces.
 
+### Modules Keepers
+
+The following modules `NewKeeper` function now take a `KVStoreService` instead of a `StoreKey`:
+
+* `x/auth`
+* `x/consensus`
+* `x/feegrant`
+* `x/nft`
+
+When not using depinject, the `runtime.NewKVStoreService` method can be used to create a `KVStoreService` from a `StoreKey`:
+
+```diff
+app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(
+  appCodec,
+- keys[consensusparamtypes.StoreKey]
++ runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]),
+  authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+)
+```
+
 ### Packages
 
 #### Store
@@ -73,20 +93,27 @@ References to `types/store.go` which contained aliases for store types have been
 The `store` module is extracted to have a separate go.mod file which allows it be a standalone module. 
 All the store imports are now renamed to use `cosmossdk.io/store` instead of `github.com/cosmos/cosmos-sdk/store` across the SDK.
 
+#### Client
+
+The return type of the interface method `TxConfig.SignModeHandler()` has been changed from `x/auth/signing.SignModeHandler` to `x/tx/signing.HandlerMap`. This change is transparent to most users as the `TxConfig` interface is typically implemented by private `x/auth/tx.config` struct (as returned by `auth.NewTxConfig`) which has been updated to return the new type.  If users have implemented their own `TxConfig` interface, they will need to update their implementation to return the new type.
+
 ### Modules
+
+#### `**all**`
+
+[RFC 001](https://docs.cosmos.network/main/rfc/rfc-001-tx-validation) has defined a simplification of the message validation process for modules.
+The `sdk.Msg` interface has been updated to not require the implementation of the `ValidateBasic` method.
+It is now recommended to validate message directly in the message server. When the validation is performed in the message server, the `ValidateBasic` method on a message is no longer required and can be removed.
+
+#### `x/auth`
+
+Methods in the `AccountKeeper` now use `context.Context` instead of `sdk.Context`. Any module that has an interface for it will need to update and re-generate mocks if needed.
+
+For ante handler construction via `ante.NewAnteHandler`, the field `ante.HandlerOptions.SignModeHandler` has been updated to `x/tx/signing/HandlerMap` from `x/auth/signing/SignModeHandler`.  Callers typically fetch this value from `client.TxConfig.SignModeHandler()` (which is also changed) so this change should be transparent to most users.
 
 #### `x/capability`
 
 Capability was moved to [IBC-GO](https://github.com/cosmos/ibc-go). IBC V8 will contain the necessary changes to incorporate the new module location
-
-#### `x/consensus`
-
-The `NewKeeper` method now takes a `KVStoreService` instead of a `StoreKey`. When not using depinject, the `runtime.NewKVStoreService` method can be used to create a `KVStoreService` from a `StoreKey`.
-
-```diff
-- app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, keys[consensusparamtypes.StoreKey], authtypes.NewModuleAddress(govtypes.ModuleName).String())
-+ app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]), authtypes.NewModuleAddress(govtypes.ModuleName).String())
-```
 
 #### `x/gov`
 
