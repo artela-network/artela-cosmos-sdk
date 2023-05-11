@@ -18,6 +18,8 @@ import (
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/yaml"
 
+	cmtcfg "github.com/cometbft/cometbft/config"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	rpc "github.com/cosmos/cosmos-sdk/client/rpc"
@@ -284,13 +286,13 @@ func BootstrapStateCmd(appCreator types.AppCreator) *cobra.Command {
 				height = app.CommitMultiStore().LastCommitID().Version
 			}
 
-			blockStoreDB, err := node.DefaultDBProvider(&node.DBContext{ID: "blockstore", Config: cfg})
+			blockStoreDB, err := cmtcfg.DefaultDBProvider(&cmtcfg.DBContext{ID: "blockstore", Config: cfg})
 			if err != nil {
 				return err
 			}
 			blockStore := store.NewBlockStore(blockStoreDB)
 
-			stateDB, err := node.DefaultDBProvider(&node.DBContext{ID: "state", Config: cfg})
+			stateDB, err := cmtcfg.DefaultDBProvider(&cmtcfg.DBContext{ID: "state", Config: cfg})
 			if err != nil {
 				return err
 			}
