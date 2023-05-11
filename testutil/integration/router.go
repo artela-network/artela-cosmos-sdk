@@ -4,20 +4,26 @@ import (
 	"context"
 	"fmt"
 
+	cmtabcitypes "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
-	cmtabcitypes "github.com/cometbft/cometbft/abci/types"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
+	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 )
 
 const appName = "integration-app"
@@ -32,8 +38,7 @@ type App struct {
 	queryHelper   *baseapp.QueryServiceTestHelper
 }
 
-// NewIntegrationApp creates an application for testing purposes. This application
-// is able to route messages to their respective handlers.
+// NewIntegrationApp creates an application for testing purposes. This application is able to route messages to their respective handlers.
 func NewIntegrationApp(
 	sdkCtx sdk.Context,
 	logger log.Logger,
@@ -74,11 +79,24 @@ func NewIntegrationApp(
 	router.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetMsgServiceRouter(router)
 
-	if err := bApp.LoadLatestVersion(); err != nil {
-		panic(fmt.Errorf("failed to load application version from store: %w", err))
+	if keys[consensusparamtypes.StoreKey] != nil {
+
+		// set baseApp param store
+		consensusParamsKeeper := consensusparamkeeper.NewKeeper(appCodec, runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]), authtypes.NewModuleAddress("gov").String(), runtime.EventService{})
+		bApp.SetParamStore(consensusParamsKeeper.ParamsStore)
+
+		if err := bApp.LoadLatestVersion(); err != nil {
+			panic(fmt.Errorf("failed to load application version from store: %w", err))
+		}
+		bApp.InitChain(context.Background(), &cmtabcitypes.RequestInitChain{ChainId: appName, ConsensusParams: simtestutil.DefaultConsensusParams})
+
+	} else {
+		if err := bApp.LoadLatestVersion(); err != nil {
+			panic(fmt.Errorf("failed to load application version from store: %w", err))
+		}
+		bApp.InitChain(context.Background(), &cmtabcitypes.RequestInitChain{ChainId: appName})
 	}
 
-	bApp.InitChain(context.Background(), &cmtabcitypes.RequestInitChain{ChainId: appName})
 	bApp.Commit(context.TODO(), &cmtabcitypes.RequestCommit{})
 
 	ctx := sdkCtx.WithBlockHeader(cmtproto.Header{ChainID: appName}).WithIsCheckTx(true)
@@ -112,10 +130,8 @@ func (app *App) RunMsg(msg sdk.Msg, option ...Option) (*codectypes.Any, error) {
 	if cfg.AutomaticBeginEndBlock {
 		height := app.LastBlockHeight() + 1
 		ctx := app.ctx.WithBlockHeight(height).WithChainID(appName)
-
 		app.logger.Info("Running BeginBlock", "height", height)
 		app.moduleManager.BeginBlock(ctx)
-
 		defer func() {
 			app.logger.Info("Running EndBlock", "height", height)
 			app.moduleManager.EndBlock(ctx)
@@ -147,7 +163,7 @@ func (app *App) RunMsg(msg sdk.Msg, option ...Option) (*codectypes.Any, error) {
 	return response, nil
 }
 
-// Context returns the application context. It can be unwrapped to a sdk.Context,
+// Context returns the application context. It can be unwraped to a sdk.Context,
 // with the sdk.UnwrapSDKContext function.
 func (app *App) Context() context.Context {
 	return app.ctx
@@ -163,11 +179,9 @@ func (app *App) QueryHelper() *baseapp.QueryServiceTestHelper {
 func CreateMultiStore(keys map[string]*storetypes.KVStoreKey, logger log.Logger) storetypes.CommitMultiStore {
 	db := dbm.NewMemDB()
 	cms := store.NewCommitMultiStore(db, logger, metrics.NewNoOpMetrics())
-
 	for key := range keys {
 		cms.MountStoreWithDB(keys[key], storetypes.StoreTypeIAVL, db)
 	}
-
 	_ = cms.LoadLatestVersion()
 	return cms
 }
