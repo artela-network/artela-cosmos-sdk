@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	cmtabcitypes "github.com/cometbft/cometbft/abci/types"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
+	cmtabcitypes "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -38,7 +37,8 @@ type App struct {
 	queryHelper   *baseapp.QueryServiceTestHelper
 }
 
-// NewIntegrationApp creates an application for testing purposes. This application is able to route messages to their respective handlers.
+// NewIntegrationApp creates an application for testing purposes. This application
+// is able to route messages to their respective handlers.
 func NewIntegrationApp(
 	sdkCtx sdk.Context,
 	logger log.Logger,
@@ -130,8 +130,10 @@ func (app *App) RunMsg(msg sdk.Msg, option ...Option) (*codectypes.Any, error) {
 	if cfg.AutomaticBeginEndBlock {
 		height := app.LastBlockHeight() + 1
 		ctx := app.ctx.WithBlockHeight(height).WithChainID(appName)
+
 		app.logger.Info("Running BeginBlock", "height", height)
 		app.moduleManager.BeginBlock(ctx)
+
 		defer func() {
 			app.logger.Info("Running EndBlock", "height", height)
 			app.moduleManager.EndBlock(ctx)
@@ -163,7 +165,7 @@ func (app *App) RunMsg(msg sdk.Msg, option ...Option) (*codectypes.Any, error) {
 	return response, nil
 }
 
-// Context returns the application context. It can be unwraped to a sdk.Context,
+// Context returns the application context. It can be unwrapped to a sdk.Context,
 // with the sdk.UnwrapSDKContext function.
 func (app *App) Context() context.Context {
 	return app.ctx
@@ -179,9 +181,11 @@ func (app *App) QueryHelper() *baseapp.QueryServiceTestHelper {
 func CreateMultiStore(keys map[string]*storetypes.KVStoreKey, logger log.Logger) storetypes.CommitMultiStore {
 	db := dbm.NewMemDB()
 	cms := store.NewCommitMultiStore(db, logger, metrics.NewNoOpMetrics())
+
 	for key := range keys {
 		cms.MountStoreWithDB(keys[key], storetypes.StoreTypeIAVL, db)
 	}
+
 	_ = cms.LoadLatestVersion()
 	return cms
 }
