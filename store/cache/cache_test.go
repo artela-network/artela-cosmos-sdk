@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"cosmossdk.io/log"
 	"github.com/cosmos/iavl"
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
@@ -11,14 +12,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/cache"
 	iavlstore "github.com/cosmos/cosmos-sdk/store/iavl"
 	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/store/wrapper"
 )
 
 func TestGetOrSetStoreCache(t *testing.T) {
-	db := dbm.NewMemDB()
+	db := wrapper.NewCosmosDB(dbm.NewMemDB())
 	mngr := cache.NewCommitKVStoreCacheManager(cache.DefaultCommitKVStoreCacheSize)
 
 	sKey := types.NewKVStoreKey("test")
-	tree, err := iavl.NewMutableTree(db, 100, false)
+	tree, err := iavl.NewMutableTree(db, 100, false, log.NewNopLogger())
 	require.NoError(t, err)
 	store := iavlstore.UnsafeNewStore(tree)
 	store2 := mngr.GetStoreCache(sKey, store)
@@ -28,11 +30,11 @@ func TestGetOrSetStoreCache(t *testing.T) {
 }
 
 func TestUnwrap(t *testing.T) {
-	db := dbm.NewMemDB()
+	db := wrapper.NewCosmosDB(dbm.NewMemDB())
 	mngr := cache.NewCommitKVStoreCacheManager(cache.DefaultCommitKVStoreCacheSize)
 
 	sKey := types.NewKVStoreKey("test")
-	tree, err := iavl.NewMutableTree(db, 100, false)
+	tree, err := iavl.NewMutableTree(db, 100, false, log.NewNopLogger())
 	require.NoError(t, err)
 	store := iavlstore.UnsafeNewStore(tree)
 	_ = mngr.GetStoreCache(sKey, store)
@@ -42,11 +44,11 @@ func TestUnwrap(t *testing.T) {
 }
 
 func TestStoreCache(t *testing.T) {
-	db := dbm.NewMemDB()
+	db := wrapper.NewCosmosDB(dbm.NewMemDB())
 	mngr := cache.NewCommitKVStoreCacheManager(cache.DefaultCommitKVStoreCacheSize)
 
 	sKey := types.NewKVStoreKey("test")
-	tree, err := iavl.NewMutableTree(db, 100, false)
+	tree, err := iavl.NewMutableTree(db, 100, false, log.NewNopLogger())
 	require.NoError(t, err)
 	store := iavlstore.UnsafeNewStore(tree)
 	kvStore := mngr.GetStoreCache(sKey, store)

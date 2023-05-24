@@ -4,7 +4,10 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"cosmossdk.io/log"
+
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
+	"github.com/cosmos/cosmos-sdk/store/wrapper"
 
 	"github.com/stretchr/testify/require"
 	dbm "github.com/tendermint/tm-db"
@@ -89,8 +92,8 @@ func testPrefixStore(t *testing.T, baseStore types.KVStore, prefix []byte) {
 }
 
 func TestIAVLStorePrefix(t *testing.T) {
-	db := dbm.NewMemDB()
-	tree, err := tiavl.NewMutableTree(db, cacheSize, false)
+	db := wrapper.NewCosmosDB(dbm.NewMemDB())
+	tree, err := tiavl.NewMutableTree(db, cacheSize, false, log.NewNopLogger())
 	require.NoError(t, err)
 	iavlStore := iavl.UnsafeNewStore(tree)
 

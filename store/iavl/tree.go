@@ -3,13 +3,15 @@ package iavl
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/iavl"
+	dbm "github.com/tendermint/tm-db"
+
+	"github.com/cosmos/cosmos-sdk/store/types"
 )
 
 var (
 	_ Tree = (*immutableTree)(nil)
-	_ Tree = (*iavl.MutableTree)(nil)
+	_ Tree = (*mutableTree)(nil)
 )
 
 type (
@@ -23,17 +25,15 @@ type (
 		Set(key, value []byte) (bool, error)
 		Remove(key []byte) ([]byte, bool, error)
 		SaveVersion() ([]byte, int64, error)
-		DeleteVersion(version int64) error
-		DeleteVersions(versions ...int64) error
+		DeleteVersionsTo(version int64) error
 		Version() int64
 		Hash() ([]byte, error)
 		VersionExists(version int64) bool
 		GetVersioned(key []byte, version int64) ([]byte, error)
-		GetVersionedWithProof(key []byte, version int64) ([]byte, *iavl.RangeProof, error)
 		GetImmutable(version int64) (*iavl.ImmutableTree, error)
 		SetInitialVersion(version uint64)
 		Iterator(start, end []byte, ascending bool) (types.Iterator, error)
-		LoadVersionForOverwriting(targetVersion int64) (int64, error)
+		LoadVersionForOverwriting(targetVersion int64) error
 	}
 
 	// immutableTree is a simple wrapper around a reference to an iavl.ImmutableTree
@@ -41,6 +41,10 @@ type (
 	// and iteration, specifically at previous heights.
 	immutableTree struct {
 		*iavl.ImmutableTree
+	}
+
+	mutableTree struct {
+		*iavl.MutableTree
 	}
 )
 
@@ -56,12 +60,8 @@ func (it *immutableTree) SaveVersion() ([]byte, int64, error) {
 	panic("cannot call 'SaveVersion' on an immutable IAVL tree")
 }
 
-func (it *immutableTree) DeleteVersion(_ int64) error {
-	panic("cannot call 'DeleteVersion' on an immutable IAVL tree")
-}
-
-func (it *immutableTree) DeleteVersions(_ ...int64) error {
-	panic("cannot call 'DeleteVersions' on an immutable IAVL tree")
+func (it *immutableTree) DeleteVersionsTo(_ int64) error {
+	panic("cannot call 'DeleteVersionsTo' on an immutable IAVL tree")
 }
 
 func (it *immutableTree) SetInitialVersion(_ uint64) {
@@ -80,14 +80,6 @@ func (it *immutableTree) GetVersioned(key []byte, version int64) ([]byte, error)
 	return it.Get(key)
 }
 
-func (it *immutableTree) GetVersionedWithProof(key []byte, version int64) ([]byte, *iavl.RangeProof, error) {
-	if it.Version() != version {
-		return nil, nil, fmt.Errorf("version mismatch on immutable IAVL tree; got: %d, expected: %d", version, it.Version())
-	}
-
-	return it.GetWithProof(key)
-}
-
 func (it *immutableTree) GetImmutable(version int64) (*iavl.ImmutableTree, error) {
 	if it.Version() != version {
 		return nil, fmt.Errorf("version mismatch on immutable IAVL tree; got: %d, expected: %d", version, it.Version())
@@ -96,6 +88,16 @@ func (it *immutableTree) GetImmutable(version int64) (*iavl.ImmutableTree, error
 	return it.ImmutableTree, nil
 }
 
-func (it *immutableTree) LoadVersionForOverwriting(targetVersion int64) (int64, error) {
+func (it *immutableTree) LoadVersionForOverwriting(targetVersion int64) error {
 	panic("cannot call 'LoadVersionForOverwriting' on an immutable IAVL tree")
+}
+
+func (it *immutableTree) Iterator(start, end []byte, ascending bool) (types.Iterator, error) {
+	iterator, err := it.ImmutableTree.Iterator(start, end, ascending)
+	return iterator.(dbm.Iterator), err
+}
+
+func (mt *mutableTree) Iterator(start, end []byte, ascending bool) (types.Iterator, error) {
+	iterator, err := mt.MutableTree.Iterator(start, end, ascending)
+	return iterator.(dbm.Iterator), err
 }

@@ -6,6 +6,7 @@ import (
 	"io"
 	"time"
 
+	clog "cosmossdk.io/log"
 	ics23 "github.com/confio/ics23/go"
 	"github.com/cosmos/iavl"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -16,6 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
 	"github.com/cosmos/cosmos-sdk/store/tracekv"
 	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/store/wrapper"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/kv"
@@ -41,16 +43,16 @@ type Store struct {
 // LoadStore returns an IAVL Store as a CommitKVStore. Internally, it will load the
 // store's version (id) from the provided DB. An error is returned if the version
 // fails to load, or if called with a positive version on an empty tree.
-func LoadStore(db dbm.DB, logger log.Logger, key types.StoreKey, id types.CommitID, lazyLoading bool, cacheSize int, disableFastNode bool) (types.CommitKVStore, error) {
-	return LoadStoreWithInitialVersion(db, logger, key, id, lazyLoading, 0, cacheSize, disableFastNode)
+func LoadStore(db dbm.DB, logger log.Logger, key types.StoreKey, id types.CommitID, cacheSize int, disableFastNode bool) (types.CommitKVStore, error) {
+	return LoadStoreWithInitialVersion(db, logger, key, id, 0, cacheSize, disableFastNode)
 }
 
 // LoadStoreWithInitialVersion returns an IAVL Store as a CommitKVStore setting its initialVersion
 // to the one given. Internally, it will load the store's version (id) from the
 // provided DB. An error is returned if the version fails to load, or if called with a positive
 // version on an empty tree.
-func LoadStoreWithInitialVersion(db dbm.DB, logger log.Logger, key types.StoreKey, id types.CommitID, lazyLoading bool, initialVersion uint64, cacheSize int, disableFastNode bool) (types.CommitKVStore, error) {
-	tree, err := iavl.NewMutableTreeWithOpts(db, cacheSize, &iavl.Options{InitialVersion: initialVersion}, disableFastNode)
+func LoadStoreWithInitialVersion(db dbm.DB, logger log.Logger, key types.StoreKey, id types.CommitID, initialVersion uint64, cacheSize int, disableFastNode bool) (types.CommitKVStore, error) {
+	tree, err := iavl.NewMutableTreeWithOpts(wrapper.NewCosmosDB(db), cacheSize, &iavl.Options{InitialVersion: initialVersion}, disableFastNode, clog.NewNopLogger())
 	if err != nil {
 		return nil, err
 	}
@@ -66,16 +68,10 @@ func LoadStoreWithInitialVersion(db dbm.DB, logger log.Logger, key types.StoreKe
 			"store_key", key.String(),
 			"version", initialVersion,
 			"commit", fmt.Sprintf("%X", id),
-			"is_lazy", lazyLoading,
 		)
 	}
 
-	if lazyLoading {
-		_, err = tree.LazyLoadVersion(id.Version)
-	} else {
-		_, err = tree.LoadVersion(id.Version)
-	}
-
+	_, err = tree.LoadVersion(id.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +81,7 @@ func LoadStoreWithInitialVersion(db dbm.DB, logger log.Logger, key types.StoreKe
 	}
 
 	return &Store{
-		tree: tree,
+		tree: &mutableTree{tree},
 	}, nil
 }
 
@@ -97,7 +93,7 @@ func LoadStoreWithInitialVersion(db dbm.DB, logger log.Logger, key types.StoreKe
 // passed into iavl.MutableTree
 func UnsafeNewStore(tree *iavl.MutableTree) *Store {
 	return &Store{
-		tree: tree,
+		tree: &mutableTree{tree},
 	}
 }
 
@@ -169,7 +165,7 @@ func (st *Store) VersionExists(version int64) bool {
 
 // GetAllVersions returns all versions in the iavl tree
 func (st *Store) GetAllVersions() []int {
-	return st.tree.(*iavl.MutableTree).AvailableVersions()
+	return st.tree.(*mutableTree).AvailableVersions()
 }
 
 // Implements Store.
@@ -220,17 +216,17 @@ func (st *Store) Delete(key []byte) {
 	st.tree.Remove(key)
 }
 
-// DeleteVersions deletes a series of versions from the MutableTree. An error
+// DeleteVersionsTo deletes versions upto the given version from the MutableTree. An error
 // is returned if any single version is invalid or the delete fails. All writes
 // happen in a single batch with a single commit.
-func (st *Store) DeleteVersions(versions ...int64) error {
-	return st.tree.DeleteVersions(versions...)
+func (st *Store) DeleteVersionsTo(version int64) error {
+	return st.tree.DeleteVersionsTo(version)
 }
 
 // LoadVersionForOverwriting attempts to load a tree at a previously committed
 // version, or the latest version below it. Any versions greater than targetVersion will be deleted.
 func (st *Store) LoadVersionForOverwriting(targetVersion int64) (int64, error) {
-	return st.tree.LoadVersionForOverwriting(targetVersion)
+	return targetVersion, st.tree.LoadVersionForOverwriting(targetVersion)
 }
 
 // Implements types.KVStore.
@@ -272,7 +268,7 @@ func (st *Store) Export(version int64) (*iavl.Exporter, error) {
 
 // Import imports an IAVL tree at the given version, returning an iavl.Importer for importing.
 func (st *Store) Import(version int64) (*iavl.Importer, error) {
-	tree, ok := st.tree.(*iavl.MutableTree)
+	tree, ok := st.tree.(*mutableTree)
 	if !ok {
 		return nil, errors.New("iavl import failed: unable to find mutable tree")
 	}
@@ -379,25 +375,24 @@ func (st *Store) Query(req abci.RequestQuery) (res abci.ResponseQuery) {
 // appropriate merkle.Proof. Since this must be called after querying for the value, this function should never error
 // Thus, it will panic on error rather than returning it
 func getProofFromTree(tree *iavl.MutableTree, key []byte, exists bool) *tmcrypto.ProofOps {
-	var (
-		commitmentProof *ics23.CommitmentProof
-		err             error
-	)
+	var commitmentProof *ics23.CommitmentProof
 
 	if exists {
 		// value was found
-		commitmentProof, err = tree.GetMembershipProof(key)
+		tempCommitmentProof, err := tree.GetMembershipProof(key)
 		if err != nil {
 			// sanity check: If value was found, membership proof must be creatable
 			panic(fmt.Sprintf("unexpected value for empty proof: %s", err.Error()))
 		}
+		commitmentProof = wrapper.ConvertCommitmentProof(tempCommitmentProof)
 	} else {
 		// value wasn't found
-		commitmentProof, err = tree.GetNonMembershipProof(key)
+		tempCommitmentProof, err := tree.GetNonMembershipProof(key)
 		if err != nil {
 			// sanity check: If value wasn't found, nonmembership proof must be creatable
 			panic(fmt.Sprintf("unexpected error for nonexistence proof: %s", err.Error()))
 		}
+		commitmentProof = wrapper.ConvertCommitmentProof(tempCommitmentProof)
 	}
 
 	op := types.NewIavlCommitmentOp(key, commitmentProof)

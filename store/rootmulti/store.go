@@ -53,7 +53,6 @@ type Store struct {
 	storesParams        map[types.StoreKey]storeParams
 	stores              map[types.StoreKey]types.CommitKVStore
 	keysByName          map[string]types.StoreKey
-	lazyLoading         bool
 	pruneHeights        []int64
 	initialVersion      int64
 
@@ -108,11 +107,6 @@ func (rs *Store) SetIAVLCacheSize(cacheSize int) {
 
 func (rs *Store) SetIAVLDisableFastNode(disableFastNode bool) {
 	rs.iavlDisableFastNode = disableFastNode
-}
-
-// SetLazyLoading sets if the iavl store should be loaded lazily or not
-func (rs *Store) SetLazyLoading(lazyLoading bool) {
-	rs.lazyLoading = lazyLoading
 }
 
 // GetStoreType implements Store.
@@ -416,8 +410,9 @@ func (rs *Store) Commit() types.CommitID {
 	}
 
 	// batch prune if the current height is a pruning interval height
-	if rs.pruningOpts.Interval > 0 && version%int64(rs.pruningOpts.Interval) == 0 {
-		rs.PruneStores(true, nil)
+	if rs.pruningOpts.Interval > 0 && version%int64(rs.pruningOpts.Interval) == 0 && len(rs.pruneHeights) > 0 {
+		rs.PruneStores(rs.pruneHeights[len(rs.pruneHeights)-1])
+		rs.pruneHeights = rs.pruneHeights[:0]
 	}
 
 	flushMetadata(rs.db, version, rs.lastCommitInfo, rs.pruneHeights)
@@ -431,31 +426,19 @@ func (rs *Store) Commit() types.CommitID {
 // PruneStores will batch delete a list of heights from each mounted sub-store.
 // If clearStorePruningHeihgts is true, store's pruneHeights is appended to the
 // pruningHeights and reset after finishing pruning.
-func (rs *Store) PruneStores(clearStorePruningHeihgts bool, pruningHeights []int64) {
-	if clearStorePruningHeihgts {
-		pruningHeights = append(pruningHeights, rs.pruneHeights...)
-	}
-
-	if len(rs.pruneHeights) == 0 {
-		return
-	}
-
+func (rs *Store) PruneStores(pruningHeight int64) {
 	for key, store := range rs.stores {
 		if store.GetStoreType() == types.StoreTypeIAVL {
 			// If the store is wrapped with an inter-block cache, we must first unwrap
 			// it to get the underlying IAVL store.
 			store = rs.GetCommitKVStore(key)
 
-			if err := store.(*iavl.Store).DeleteVersions(pruningHeights...); err != nil {
+			if err := store.(*iavl.Store).DeleteVersionsTo(pruningHeight); err != nil {
 				if errCause := errors.Cause(err); errCause != nil && errCause != iavltree.ErrVersionDoesNotExist {
 					panic(err)
 				}
 			}
 		}
-	}
-
-	if clearStorePruningHeihgts {
-		rs.pruneHeights = make([]int64, 0)
 	}
 }
 
@@ -729,7 +712,7 @@ func (rs *Store) Snapshot(height uint64, protoWriter protoio.Writer) error {
 
 		for {
 			node, err := exporter.Next()
-			if err == iavltree.ExportDone {
+			if err == iavltree.ErrorExportDone {
 				break
 			} else if err != nil {
 				return err
@@ -856,9 +839,9 @@ func (rs *Store) loadCommitStoreFromParams(key types.StoreKey, id types.CommitID
 		var err error
 
 		if params.initialVersion == 0 {
-			store, err = iavl.LoadStore(db, rs.logger, key, id, rs.lazyLoading, rs.iavlCacheSize, rs.iavlDisableFastNode)
+			store, err = iavl.LoadStore(db, rs.logger, key, id, rs.iavlCacheSize, rs.iavlDisableFastNode)
 		} else {
-			store, err = iavl.LoadStoreWithInitialVersion(db, rs.logger, key, id, rs.lazyLoading, params.initialVersion, rs.iavlCacheSize, rs.iavlDisableFastNode)
+			store, err = iavl.LoadStoreWithInitialVersion(db, rs.logger, key, id, params.initialVersion, rs.iavlCacheSize, rs.iavlDisableFastNode)
 		}
 
 		if err != nil {
