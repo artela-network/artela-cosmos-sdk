@@ -236,6 +236,8 @@ github.com/cosmos/iavl v1.0.0-alpha.1.0.20230519201238-f706bdeefb1f h1:o+Da1G3iN
 github.com/cosmos/iavl v1.0.0-alpha.1.0.20230519201238-f706bdeefb1f/go.mod h1:88jf53GZeYtE3I0wbXa+AlqX1ZSn/15cbedv2lmR65U=
 github.com/cosmos/iavl v1.0.0-alpha.1.0.20230525160555-086110c7ad79 h1:aoz8Y08vCYB+Wwa0PbRpgIKGtKKUBJv6z86MJ92LNr0=
 github.com/cosmos/iavl v1.0.0-alpha.1.0.20230525160555-086110c7ad79/go.mod h1:88jf53GZeYtE3I0wbXa+AlqX1ZSn/15cbedv2lmR65U=
+github.com/cosmos/iavl v1.0.0-alpha.1.0.20230525174229-7bec8a47b7d3 h1:LgiaXVQkVMogboWdD2KY9rhvaqgzSB574rP56PaIGJQ=
+github.com/cosmos/iavl v1.0.0-alpha.1.0.20230525174229-7bec8a47b7d3/go.mod h1:88jf53GZeYtE3I0wbXa+AlqX1ZSn/15cbedv2lmR65U=
 github.com/cosmos/ics23/go v0.10.0 h1:iXqLLgp2Lp+EdpIuwXTYIQU+AiHj9mOC2X9ab++bZDM=
 github.com/cosmos/ics23/go v0.10.0/go.mod h1:ZfJSmng/TBNTBkFemHHHj5YY7VAU/MBU980F4VU1NG0=
 github.com/cosmos/keyring v1.2.0 h1:8C1lBP9xhImmIabyXW4c3vFjjLiBdGCmfLUfeZlV1Yo=

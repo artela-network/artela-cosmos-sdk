@@ -14,7 +14,7 @@ require (
 	github.com/cosmos/btcutil v1.0.4
 	github.com/cosmos/cosmos-db v1.0.0-rc.1
 	github.com/cosmos/go-bip39 v1.0.0
-	github.com/cosmos/iavl v1.0.0-alpha.1.0.20230525160555-086110c7ad79
+	github.com/cosmos/iavl v1.0.0-alpha.1.0.20230525174229-7bec8a47b7d3
 	github.com/cosmos/ics23/go v0.10.0
 	github.com/cosmos/ledger-cosmos-go v0.12.2
 	github.com/gogo/gateway v1.1.0
