@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	cosmos_proto "github.com/cosmos/cosmos-proto"
+	gogoproto "github.com/cosmos/gogoproto/proto"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
+	"google.golang.org/protobuf/runtime/protoiface"
 
 	"cosmossdk.io/core/address"
 
@@ -339,9 +341,18 @@ func (c *Context) TypeResolver() protoregistry.MessageTypeResolver {
 // NOTE: if a custom signers function is defined, the message type used to
 // define this function MUST be the concrete type passed to GetSigners,
 // otherwise a runtime type error will occur.
-func DefineCustomGetSigners[T proto.Message](ctx *Context, getSigners func(T) ([][]byte, error)) {
+func DefineCustomGetSigners[T protoiface.MessageV1](ctx *Context, getSigners func(T) ([][]byte, error)) {
 	t := *new(T)
-	ctx.getSignersFuncs[t.ProtoReflect().Descriptor().FullName()] = func(msg proto.Message) ([][]byte, error) {
+	var name protoreflect.FullName
+	switch v := any(t).(type) {
+	case protoreflect.ProtoMessage:
+		name = v.ProtoReflect().Descriptor().FullName()
+	case gogoproto.Message:
+		name = protoreflect.FullName(gogoproto.MessageName(v))
+	default:
+		panic(fmt.Errorf("unexpected type %T", t))
+	}
+	ctx.getSignersFuncs[name] = func(msg proto.Message) ([][]byte, error) {
 		return getSigners(msg.(T))
 	}
 }
