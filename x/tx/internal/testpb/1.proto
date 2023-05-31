@@ -107,6 +107,7 @@ message Ballot {
   repeated WeightedBallotOption options = 4;
 }
 
+// TODO remove
 message CustomSignedMessage {
   option (cosmos.msg.v1.custom_signer) = true;
   string thing1 = 1;
