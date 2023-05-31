@@ -1,6 +1,8 @@
 package tx
 
 import (
+	"encoding/hex"
+	"strings"
 	"testing"
 
 	msgv1 "cosmossdk.io/api/cosmos/msg/v1"
@@ -160,4 +162,14 @@ func (d dummyAddressCodec) StringToBytes(text string) ([]byte, error) {
 
 func (d dummyAddressCodec) BytesToString(bz []byte) (string, error) {
 	return string(bz), nil
+}
+
+type dummyValidatorAddressCodec struct{}
+
+func (d dummyValidatorAddressCodec) StringToBytes(text string) ([]byte, error) {
+	return hex.DecodeString(strings.TrimPrefix(text, "val"))
+}
+
+func (d dummyValidatorAddressCodec) BytesToString(bz []byte) (string, error) {
+	return "val" + hex.EncodeToString(bz), nil
 }

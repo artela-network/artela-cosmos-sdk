@@ -83,12 +83,12 @@ func NewContext(options Options) (*Context, error) {
 	return c, nil
 }
 
-type getSignersFunc func(proto.Message) ([][]byte, error)
+type getSignersFunc func(protoiface.MessageV1) ([][]byte, error)
 
 func getSignersFieldNames(descriptor protoreflect.MessageDescriptor) ([]string, error) {
 	signersFields := proto.GetExtension(descriptor.Options(), msgv1.E_Signer).([]string)
 	if len(signersFields) == 0 {
-		return nil, fmt.Errorf("no cosmos.msg.v1.signer option found for message %s", descriptor.FullName())
+		return nil, fmt.Errorf("no cosmos.msg.v1.signer option found for message %s; if you need custom signer logic use DefineCustomGetSigners", descriptor.FullName())
 	}
 
 	return signersFields, nil
@@ -113,6 +113,7 @@ func (c *Context) Validate() error {
 			for j := 0; j < sd.Methods().Len(); j++ {
 				md := sd.Methods().Get(j).Input()
 				_, err := c.getGetSignersFn(md)
+				// TODO probably remove and just err. DefineCustomGetSigners should have been called
 				if err != nil && !errors.Is(err, NeedCustomSignersError) { // don't fail on custom signers
 					errs = append(errs, err)
 				}
@@ -126,11 +127,6 @@ func (c *Context) Validate() error {
 }
 
 func (c *Context) makeGetSignersFunc(descriptor protoreflect.MessageDescriptor) (getSignersFunc, error) {
-	isCustom := proto.GetExtension(descriptor.Options(), msgv1.E_CustomSigner).(bool)
-	if isCustom {
-		return nil, fmt.Errorf("%w: %s", NeedCustomSignersError, descriptor.FullName())
-	}
-
 	signersFields, err := getSignersFieldNames(descriptor)
 	if err != nil {
 		return nil, err
@@ -266,10 +262,14 @@ func (c *Context) makeGetSignersFunc(descriptor protoreflect.MessageDescriptor) 
 		}
 	}
 
-	return func(message proto.Message) ([][]byte, error) {
+	return func(message protoiface.MessageV1) ([][]byte, error) {
+		protoMessage, ok := message.(proto.Message)
+		if !ok {
+			return nil, fmt.Errorf("expected proto.Message, got %T", message)
+		}
 		var signers [][]byte
 		for _, getter := range fieldGetters {
-			signers, err = getter(message, signers)
+			signers, err = getter(protoMessage, signers)
 			if err != nil {
 				return nil, err
 			}
@@ -305,13 +305,24 @@ func (c *Context) getGetSignersFn(messageDescriptor protoreflect.MessageDescript
 }
 
 // GetSigners returns the signers for a given message.
-func (c *Context) GetSigners(msg proto.Message) ([][]byte, error) {
-	f, err := c.getGetSignersFn(msg.ProtoReflect().Descriptor())
-	if err != nil {
-		return nil, err
-	}
+func (c *Context) GetSigners(msg protoiface.MessageV1) ([][]byte, error) {
+	switch v := msg.(type) {
+	case protoreflect.ProtoMessage:
+		f, err := c.getGetSignersFn(v.ProtoReflect().Descriptor())
+		if err != nil {
+			return nil, err
+		}
 
-	return f(msg)
+		return f(msg)
+	case gogoproto.Message:
+		f, ok := c.getSignersFuncs[protoreflect.FullName(gogoproto.MessageName(v))]
+		if !ok {
+			return nil, fmt.Errorf("no signers function defined for message %T", msg)
+		}
+		return f(msg)
+	default:
+		return nil, fmt.Errorf("unexpected message type %T", msg)
+	}
 }
 
 // AddressCodec returns the address codec used by the context.
@@ -343,17 +354,20 @@ func (c *Context) TypeResolver() protoregistry.MessageTypeResolver {
 // otherwise a runtime type error will occur.
 func DefineCustomGetSigners[T protoiface.MessageV1](ctx *Context, getSigners func(T) ([][]byte, error)) {
 	t := *new(T)
-	var name protoreflect.FullName
 	switch v := any(t).(type) {
 	case protoreflect.ProtoMessage:
-		name = v.ProtoReflect().Descriptor().FullName()
+		name := v.ProtoReflect().Descriptor().FullName()
+		ctx.getSignersFuncs[name] = func(msg protoiface.MessageV1) ([][]byte, error) {
+			return getSigners(msg.(T))
+		}
 	case gogoproto.Message:
-		name = protoreflect.FullName(gogoproto.MessageName(v))
+		// I am defining the CustomGetSigner with a gogoproto type, but it will only ever be called with a pulsar type.
+		name := protoreflect.FullName(gogoproto.MessageName(v))
+		ctx.getSignersFuncs[name] = func(msg protoiface.MessageV1) ([][]byte, error) {
+			return getSigners(msg.(T))
+		}
 	default:
 		panic(fmt.Errorf("unexpected type %T", t))
-	}
-	ctx.getSignersFuncs[name] = func(msg proto.Message) ([][]byte, error) {
-		return getSigners(msg.(T))
 	}
 }
 

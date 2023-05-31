@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-proto/anyutil"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoregistry"
+	"google.golang.org/protobuf/runtime/protoiface"
 
 	signingv1beta1 "cosmossdk.io/api/cosmos/tx/signing/v1beta1"
 	txv1beta1 "cosmossdk.io/api/cosmos/tx/v1beta1"
@@ -68,7 +69,7 @@ func (h SignModeHandler) getFirstSigner(txData signing.TxData) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	signer, err := h.signersContext.GetSigners(msg)
+	signer, err := h.signersContext.GetSigners(msg.(protoiface.MessageV1))
 	if err != nil {
 		return nil, err
 	}

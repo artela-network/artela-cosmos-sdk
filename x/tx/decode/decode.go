@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-proto/anyutil"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/runtime/protoiface"
 
 	"cosmossdk.io/x/tx/signing"
 )
@@ -103,7 +104,7 @@ func (d *Decoder) Decode(txBytes []byte) (*DecodedTx, error) {
 			return nil, errors.Wrap(ErrTxDecode, signerErr.Error())
 		}
 		msgs = append(msgs, msg)
-		ss, signerErr := d.signingCtx.GetSigners(msg)
+		ss, signerErr := d.signingCtx.GetSigners(msg.(protoiface.MessageV1))
 		if signerErr != nil {
 			return nil, errors.Wrap(ErrTxDecode, signerErr.Error())
 		}
