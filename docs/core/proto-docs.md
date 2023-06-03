@@ -5358,6 +5358,7 @@ TallyParams defines the params for tallying votes on governance proposals.
 | `threshold` | [bytes](#bytes) |  | Minimum proportion of Yes votes for proposal to pass. Default value: 0.5. |
 | `veto_threshold` | [bytes](#bytes) |  | Minimum value of Veto votes to Total votes ratio for proposal to be vetoed. Default value: 1/3. |
 | `expedited_threshold` | [bytes](#bytes) |  | Minimum proportion of Yes votes for an expedited proposal to pass. Default value: 0.67. |
+| `expedited_quorum` | [bytes](#bytes) |  | Minimum proportion of Yes votes for an expedited proposal to reach quorum. Default value: 0.67. |
 
 
 
