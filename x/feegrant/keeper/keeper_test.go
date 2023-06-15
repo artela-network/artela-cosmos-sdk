@@ -184,6 +184,31 @@ func (suite *KeeperTestSuite) TestKeeperCrud() {
 
 	_, err = suite.msgSrvr.RevokeAllowance(suite.ctx, &feegrant.MsgRevokeAllowance{Granter: suite.addrs[3].String(), Grantee: address})
 	suite.Require().NoError(err)
+
+	newCtx := suite.ctx.WithBlockTime(suite.ctx.BlockTime().AddDate(3, 0, 0))
+	suite.Require().NoError(suite.feegrantKeeper.RemoveExpiredAllowances(newCtx))
+}
+
+func (suite *KeeperTestSuite) TestRevokeAllowance1() {
+	// some helpers
+	exp := suite.ctx.BlockTime().AddDate(0, 0, 1)
+	basic := &feegrant.BasicAllowance{
+		SpendLimit: suite.atom,
+		Expiration: &exp,
+	}
+
+	// let's set up some initial state here
+
+	// addrs[0] -> addrs[1] (basic)
+	err := suite.feegrantKeeper.GrantAllowance(suite.ctx, suite.addrs[0], suite.addrs[1], basic)
+	suite.Require().NoError(err)
+
+	// remove some, overwrite other
+	_, err = suite.msgSrvr.RevokeAllowance(suite.ctx, &feegrant.MsgRevokeAllowance{Granter: suite.addrs[0].String(), Grantee: suite.addrs[1].String()})
+	suite.Require().NoError(err)
+
+	newCtx := suite.ctx.WithBlockTime(suite.ctx.BlockTime().AddDate(0, 0, 2))
+	suite.Require().NoError(suite.feegrantKeeper.RemoveExpiredAllowances(newCtx))
 }
 
 func (suite *KeeperTestSuite) TestUseGrantedFee() {
