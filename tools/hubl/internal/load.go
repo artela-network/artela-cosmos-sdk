@@ -9,6 +9,9 @@ import (
 	"path"
 
 	cockroachdberrors "github.com/cockroachdb/errors"
+	"github.com/dominikbraun/graph"
+	"github.com/jhump/protoreflect/desc"
+	"github.com/jhump/protoreflect/desc/protoprint"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -64,6 +67,75 @@ func (c *ChainInfo) appOptsCacheFilename() (string, error) {
 		return "", err
 	}
 	return path.Join(cacheDir, fmt.Sprintf("%s.autocli", c.Chain)), nil
+}
+
+func (c *ChainInfo) EmitProtoIDL() error {
+	const outDir = "/Users/mattk/tmp/hubl"
+	fdsFilename, err := c.fdsCacheFilename()
+	if err != nil {
+		return err
+	}
+	fdBz, err := os.ReadFile(fdsFilename)
+	if err != nil {
+		return err
+	}
+	fdSet := &descriptorpb.FileDescriptorSet{}
+	if err = proto.Unmarshal(fdBz, fdSet); err != nil {
+		return err
+	}
+
+	depGraph := graph.New(graph.StringHash, graph.Directed(), graph.PreventCycles())
+	fdpsByName := make(map[string]*descriptorpb.FileDescriptorProto)
+	fdsByName := make(map[string]*desc.FileDescriptor)
+
+	for _, f := range fdSet.File {
+		fdName := f.GetName()
+		fdpsByName[fdName] = f
+		err := depGraph.AddVertex(fdName)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, f := range fdSet.File {
+		for _, depName := range f.Dependency {
+			err := depGraph.AddEdge(f.GetName(), depName)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	descs := make([]*desc.FileDescriptor, len(fdSet.File))
+	order, err := graph.TopologicalSort(depGraph)
+	if err != nil {
+		return err
+	}
+	for i := len(order) - 1; i >= 0; i-- {
+		name := order[i]
+		fdp, ok := fdpsByName[name]
+		if !ok {
+			return errors.New("missing descriptor")
+		}
+		deps := make([]*desc.FileDescriptor, len(fdp.Dependency))
+		for j, depName := range fdp.Dependency {
+			fd, ok := fdsByName[depName]
+			if !ok {
+				return errors.New("missing dependency")
+			}
+			deps[j] = fd
+		}
+		d, err := desc.CreateFileDescriptor(fdp, deps...)
+		if err != nil {
+			return err
+		}
+		descs[i] = d
+		fdsByName[name] = d
+	}
+
+	printer := protoprint.Printer{}
+	err = printer.PrintProtosToFileSystem(descs, outDir)
+	return err
 }
 
 func (c *ChainInfo) Load(reload bool) error {
