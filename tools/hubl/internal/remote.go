@@ -115,7 +115,7 @@ func RemoteCommand(config *Config, configDir string) ([]*cobra.Command, error) {
 			update   bool
 			reconfig bool
 			insecure bool
-			emit     bool
+			emit     string
 			output   string
 		)
 
@@ -129,8 +129,8 @@ func RemoteCommand(config *Config, configDir string) ([]*cobra.Command, error) {
 				case update:
 					cmd.Printf("Updating autocli data for %s\n", chain)
 					return chainInfo.Load(true)
-				case emit:
-					return chainInfo.EmitProtoIDL()
+				case emit != "":
+					return chainInfo.EmitProtoIDL(emit)
 				default:
 					return cmd.Help()
 				}
@@ -139,7 +139,7 @@ func RemoteCommand(config *Config, configDir string) ([]*cobra.Command, error) {
 		chainCmd.Flags().BoolVar(&update, flagUpdate, false, "update the CLI commands for the selected chain (should be used after every chain upgrade)")
 		chainCmd.Flags().BoolVar(&reconfig, flagConfig, false, "re-configure the selected chain (allows choosing a new gRPC endpoint and refreshes data")
 		chainCmd.Flags().BoolVar(&insecure, flagInsecure, false, "allow re-configuring the selected chain using an insecure gRPC connection")
-		chainCmd.Flags().BoolVar(&emit, flagEmit, false, "emit proto specs to stdout")
+		chainCmd.Flags().StringVar(&emit, flagEmit, "", "emit proto files to directory")
 		chainCmd.PersistentFlags().StringVar(&output, flags.FlagOutput, flags.OutputFormatJSON, "output format (text|json)")
 
 		if err := appOpts.EnhanceRootCommandWithBuilder(chainCmd, builder); err != nil {

@@ -69,8 +69,8 @@ func (c *ChainInfo) appOptsCacheFilename() (string, error) {
 	return path.Join(cacheDir, fmt.Sprintf("%s.autocli", c.Chain)), nil
 }
 
-func (c *ChainInfo) EmitProtoIDL() error {
-	const outDir = "/Users/mattk/tmp/hubl"
+func (c *ChainInfo) EmitProtoIDL(outDir string) error {
+	outDir = fmt.Sprintf("%s/%s", outDir, c.Chain)
 	fdsFilename, err := c.fdsCacheFilename()
 	if err != nil {
 		return err
