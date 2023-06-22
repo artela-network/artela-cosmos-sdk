@@ -115,13 +115,13 @@ func (c *ChainInfo) EmitProtoIDL() error {
 		name := order[i]
 		fdp, ok := fdpsByName[name]
 		if !ok {
-			return errors.New("missing descriptor")
+			return fmt.Errorf("missing file descriptor proto for %s", name)
 		}
 		deps := make([]*desc.FileDescriptor, len(fdp.Dependency))
 		for j, depName := range fdp.Dependency {
 			fd, ok := fdsByName[depName]
 			if !ok {
-				return errors.New("missing dependency")
+				return fmt.Errorf("missing file descriptor for %s", depName)
 			}
 			deps[j] = fd
 		}
