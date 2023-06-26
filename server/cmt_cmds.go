@@ -46,7 +46,7 @@ func ShowNodeIDCmd() *cobra.Command {
 				return err
 			}
 
-			fmt.Println(nodeKey.ID())
+			cmd.Println(nodeKey.ID())
 			return nil
 		},
 	}
@@ -78,7 +78,7 @@ func ShowValidatorCmd() *cobra.Command {
 				return err
 			}
 
-			fmt.Println(string(bz))
+			cmd.Println(string(bz))
 			return nil
 		},
 	}
@@ -98,7 +98,7 @@ func ShowAddressCmd() *cobra.Command {
 			privValidator := pvm.LoadFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile())
 
 			valConsAddr := (sdk.ConsAddress)(privValidator.GetAddress())
-			fmt.Println(valConsAddr.String())
+			cmd.Println(valConsAddr.String())
 			return nil
 		},
 	}
