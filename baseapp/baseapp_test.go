@@ -8,10 +8,12 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/stretchr/testify/assert"
@@ -95,6 +97,20 @@ func setupBaseApp(t *testing.T, options ...func(*BaseApp)) (*BaseApp, error) {
 	// stores are mounted
 	err := app.LoadLatestVersion()
 	return app, err
+}
+
+func getQueryBaseapp(t *testing.T) *BaseApp {
+	db := dbm.NewMemDB()
+	name := t.Name()
+	app := NewBaseApp(name, defaultLogger(), db, nil)
+
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: 1}})
+	app.Commit()
+
+	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{Height: 2}})
+	app.Commit()
+
+	return app
 }
 
 // simple one store baseapp with data and snapshots. Each tx is 1 MB in size (uncompressed).
@@ -2058,6 +2074,75 @@ func TestLoadSnapshotChunk(t *testing.T) {
 			}
 			assert.NotEmpty(t, resp.Chunk)
 		})
+	}
+}
+
+type ctxType string
+
+const (
+	QueryCtx     ctxType = "query"
+	CheckTxCtx   ctxType = "checkTx"
+	DeliverTxCtx ctxType = "deliverTx"
+)
+
+var ctxTypes = []ctxType{QueryCtx, CheckTxCtx}
+
+func getCheckStateCtx(app *BaseApp) sdk.Context {
+	v := reflect.ValueOf(app).Elem()
+	f := v.FieldByName("checkState")
+	rf := reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem()
+	return rf.MethodByName("Context").Call(nil)[0].Interface().(sdk.Context)
+}
+
+func getDeliverStateCtx(app *BaseApp) sdk.Context {
+	v := reflect.ValueOf(app).Elem()
+	f := v.FieldByName("deliverState")
+	rf := reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem()
+	return rf.MethodByName("Context").Call(nil)[0].Interface().(sdk.Context)
+}
+
+func (c ctxType) GetCtx(t *testing.T, bapp *BaseApp) sdk.Context {
+	if c == QueryCtx {
+		ctx, err := bapp.createQueryContext(1, false)
+		require.NoError(t, err)
+		return ctx
+	} else if c == CheckTxCtx {
+		return getCheckStateCtx(bapp)
+	}
+	// TODO: Not supported yet
+	return getDeliverStateCtx(bapp)
+}
+
+func TestQueryGasLimit(t *testing.T) {
+	testCases := []struct {
+		queryGasLimit   uint64
+		gasActuallyUsed uint64
+		shouldQueryErr  bool
+	}{
+		{queryGasLimit: 100, gasActuallyUsed: 50, shouldQueryErr: false},  // Valid case
+		{queryGasLimit: 100, gasActuallyUsed: 150, shouldQueryErr: true},  // gasActuallyUsed > queryGasLimit
+		{queryGasLimit: 0, gasActuallyUsed: 50, shouldQueryErr: false},    // fuzzing with queryGasLimit = 0
+		{queryGasLimit: 0, gasActuallyUsed: 0, shouldQueryErr: false},     // both queryGasLimit and gasActuallyUsed are 0
+		{queryGasLimit: 200, gasActuallyUsed: 200, shouldQueryErr: true},  // gasActuallyUsed > queryGasLimit
+		{queryGasLimit: 100, gasActuallyUsed: 1000, shouldQueryErr: true}, // gasActuallyUsed > queryGasLimit
+	}
+
+	for _, tc := range testCases {
+		for _, ctxType := range ctxTypes {
+			t.Run(fmt.Sprintf("%s: %d - %d", ctxType, tc.queryGasLimit, tc.gasActuallyUsed), func(t *testing.T) {
+				app := getQueryBaseapp(t)
+				SetQueryGasLimit(tc.queryGasLimit)(app)
+				ctx := ctxType.GetCtx(t, app)
+
+				// query gas limit should have no effect when CtxType != QueryCtx
+				f := func() { ctx.GasMeter().ConsumeGas(tc.gasActuallyUsed, "test") }
+				if tc.shouldQueryErr && ctxType == QueryCtx {
+					require.Panics(t, f)
+				} else {
+					require.NotPanics(t, f)
+				}
+			})
+		}
 	}
 }
 
