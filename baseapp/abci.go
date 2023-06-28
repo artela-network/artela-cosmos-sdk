@@ -209,6 +209,19 @@ func (app *BaseApp) BeginBlock(req abci.RequestBeginBlock) (res abci.ResponseBeg
 	}
 	// set the signed validators for addition to context in deliverTx
 	app.voteInfos = req.LastCommitInfo.GetVotes()
+
+	// call the streaming service hook with the BeginBlock messages
+	for _, abciListener := range app.streamingManager.ABCIListeners {
+		ctx := app.deliverState.ctx
+		blockHeight := ctx.BlockHeight()
+		if err := abciListener.ListenBeginBlock(app.deliverState.ctx, req, res); err != nil {
+			app.logger.Error("BeginBlock listening hook failed", "height", blockHeight, "err", err)
+			if app.streamingManager.StopNodeOnErr {
+				panic(err)
+			}
+		}
+	}
+
 	return res
 }
 
@@ -227,6 +240,17 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 
 	if cp := app.GetConsensusParams(app.deliverState.ctx); cp != nil {
 		res.ConsensusParamUpdates = cp
+	}
+
+	for _, abciListener := range app.streamingManager.ABCIListeners {
+		ctx := app.deliverState.ctx
+		blockHeight := ctx.BlockHeight()
+		if err := abciListener.ListenEndBlock(ctx, req, res); err != nil {
+			app.logger.Error("EndBlock listening hook failed", "height", blockHeight, "err", err)
+			if app.streamingManager.StopNodeOnErr {
+				panic(err)
+			}
+		}
 	}
 
 	return res
@@ -279,6 +303,21 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) abci.ResponseDeliverTx 
 	gInfo := sdk.GasInfo{}
 	resultStr := "successful"
 
+	var res abci.ResponseDeliverTx
+	defer func() {
+		// call the streaming service hook with the EndBlock messages
+		for _, abciListener := range app.streamingManager.ABCIListeners {
+			ctx := app.deliverState.ctx
+			blockHeight := ctx.BlockHeight()
+			if err := abciListener.ListenDeliverTx(ctx, req, res); err != nil {
+				app.logger.Error("DeliverTx listening hook failed", "height", blockHeight, "err", err)
+				if app.streamingManager.StopNodeOnErr {
+					panic(err)
+				}
+			}
+		}
+	}()
+
 	defer func() {
 		telemetry.IncrCounter(1, "tx", "count")
 		telemetry.IncrCounter(1, "tx", resultStr)
@@ -292,13 +331,14 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) abci.ResponseDeliverTx 
 		return sdkerrors.ResponseDeliverTxWithEvents(err, gInfo.GasWanted, gInfo.GasUsed, anteEvents, app.trace)
 	}
 
-	return abci.ResponseDeliverTx{
+	res = abci.ResponseDeliverTx{
 		GasWanted: int64(gInfo.GasWanted), // TODO: Should type accept unsigned ints?
 		GasUsed:   int64(gInfo.GasUsed),   // TODO: Should type accept unsigned ints?
 		Log:       result.Log,
 		Data:      result.Data,
 		Events:    sdk.MarkEventsToIndex(result.Events, app.indexEvents),
 	}
+	return res
 }
 
 // Commit implements the ABCI interface. It will commit all state that exists in
@@ -319,6 +359,22 @@ func (app *BaseApp) Commit() (res abci.ResponseCommit) {
 	// MultiStore (app.cms) so when Commit() is called is persists those values.
 	app.deliverState.ms.Write()
 	commitID := app.cms.Commit()
+
+	abciListeners := app.streamingManager.ABCIListeners
+	if len(abciListeners) > 0 {
+		ctx := app.deliverState.ctx
+		blockHeight := ctx.BlockHeight()
+		changeSet := app.cms.PopStateCache()
+
+		for _, abciListener := range abciListeners {
+			if err := abciListener.ListenCommit(ctx, res, changeSet); err != nil {
+				app.logger.Error("Commit listening hook failed", "height", blockHeight, "err", err)
+				if app.streamingManager.StopNodeOnErr {
+					panic(err)
+				}
+			}
+		}
+	}
 
 	// Reset the Check state to the latest committed.
 	//

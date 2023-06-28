@@ -1,7 +1,6 @@
 package rootmulti
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -15,14 +14,11 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	codecTypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/pruning/mock"
 	pruningtypes "github.com/cosmos/cosmos-sdk/pruning/types"
 	"github.com/cosmos/cosmos-sdk/store/cachemulti"
 	"github.com/cosmos/cosmos-sdk/store/iavl"
 	sdkmaps "github.com/cosmos/cosmos-sdk/store/internal/maps"
-	"github.com/cosmos/cosmos-sdk/store/listenkv"
 	"github.com/cosmos/cosmos-sdk/store/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -660,104 +656,13 @@ func TestAddListenersAndListeningEnabled(t *testing.T) {
 	enabled := multi.ListeningEnabled(testKey)
 	require.False(t, enabled)
 
-	multi.AddListeners(testKey, []types.WriteListener{})
-	enabled = multi.ListeningEnabled(testKey)
-	require.False(t, enabled)
-
-	mockListener := types.NewStoreKVPairWriteListener(nil, nil)
-	multi.AddListeners(testKey, []types.WriteListener{mockListener})
 	wrongTestKey := types.NewKVStoreKey("wrong_listening_test_key")
+	multi.AddListeners([]types.StoreKey{testKey})
 	enabled = multi.ListeningEnabled(wrongTestKey)
 	require.False(t, enabled)
 
 	enabled = multi.ListeningEnabled(testKey)
 	require.True(t, enabled)
-}
-
-var (
-	interfaceRegistry = codecTypes.NewInterfaceRegistry()
-	testMarshaller    = codec.NewProtoCodec(interfaceRegistry)
-	testKey1          = []byte{1, 2, 3, 4, 5}
-	testValue1        = []byte{5, 4, 3, 2, 1}
-	testKey2          = []byte{2, 3, 4, 5, 6}
-	testValue2        = []byte{6, 5, 4, 3, 2}
-)
-
-func TestGetListenWrappedKVStore(t *testing.T) {
-	buf := new(bytes.Buffer)
-	var db dbm.DB = dbm.NewMemDB()
-	ms := newMultiStoreWithMounts(db, pruningtypes.NewPruningOptions(pruningtypes.PruningNothing))
-	ms.LoadLatestVersion()
-	mockListeners := []types.WriteListener{types.NewStoreKVPairWriteListener(buf, testMarshaller)}
-	ms.AddListeners(testStoreKey1, mockListeners)
-	ms.AddListeners(testStoreKey2, mockListeners)
-
-	listenWrappedStore1 := ms.GetKVStore(testStoreKey1)
-	require.IsType(t, &listenkv.Store{}, listenWrappedStore1)
-
-	listenWrappedStore1.Set(testKey1, testValue1)
-	expectedOutputKVPairSet1, err := testMarshaller.MarshalLengthPrefixed(&types.StoreKVPair{
-		Key:      testKey1,
-		Value:    testValue1,
-		StoreKey: testStoreKey1.Name(),
-		Delete:   false,
-	})
-	require.Nil(t, err)
-	kvPairSet1Bytes := buf.Bytes()
-	buf.Reset()
-	require.Equal(t, expectedOutputKVPairSet1, kvPairSet1Bytes)
-
-	listenWrappedStore1.Delete(testKey1)
-	expectedOutputKVPairDelete1, err := testMarshaller.MarshalLengthPrefixed(&types.StoreKVPair{
-		Key:      testKey1,
-		Value:    nil,
-		StoreKey: testStoreKey1.Name(),
-		Delete:   true,
-	})
-	require.Nil(t, err)
-	kvPairDelete1Bytes := buf.Bytes()
-	buf.Reset()
-	require.Equal(t, expectedOutputKVPairDelete1, kvPairDelete1Bytes)
-
-	listenWrappedStore2 := ms.GetKVStore(testStoreKey2)
-	require.IsType(t, &listenkv.Store{}, listenWrappedStore2)
-
-	listenWrappedStore2.Set(testKey2, testValue2)
-	expectedOutputKVPairSet2, err := testMarshaller.MarshalLengthPrefixed(&types.StoreKVPair{
-		Key:      testKey2,
-		Value:    testValue2,
-		StoreKey: testStoreKey2.Name(),
-		Delete:   false,
-	})
-	require.NoError(t, err)
-	kvPairSet2Bytes := buf.Bytes()
-	buf.Reset()
-	require.Equal(t, expectedOutputKVPairSet2, kvPairSet2Bytes)
-
-	listenWrappedStore2.Delete(testKey2)
-	expectedOutputKVPairDelete2, err := testMarshaller.MarshalLengthPrefixed(&types.StoreKVPair{
-		Key:      testKey2,
-		Value:    nil,
-		StoreKey: testStoreKey2.Name(),
-		Delete:   true,
-	})
-	require.NoError(t, err)
-	kvPairDelete2Bytes := buf.Bytes()
-	buf.Reset()
-	require.Equal(t, expectedOutputKVPairDelete2, kvPairDelete2Bytes)
-
-	unwrappedStore := ms.GetKVStore(testStoreKey3)
-	require.IsType(t, &iavl.Store{}, unwrappedStore)
-
-	unwrappedStore.Set(testKey2, testValue2)
-	kvPairSet3Bytes := buf.Bytes()
-	buf.Reset()
-	require.Equal(t, []byte{}, kvPairSet3Bytes)
-
-	unwrappedStore.Delete(testKey2)
-	kvPairDelete3Bytes := buf.Bytes()
-	buf.Reset()
-	require.Equal(t, []byte{}, kvPairDelete3Bytes)
 }
 
 func TestCacheWraps(t *testing.T) {
@@ -1013,4 +918,33 @@ func hashStores(stores map[types.StoreKey]types.CommitKVStore) []byte {
 		}.GetHash()
 	}
 	return sdkmaps.HashFromMap(m)
+}
+
+func TestStateListeners(t *testing.T) {
+	var db dbm.DB = dbm.NewMemDB()
+	ms := newMultiStoreWithMounts(db, pruningtypes.NewPruningOptions(pruningtypes.PruningNothing))
+	require.Empty(t, ms.listeners)
+
+	ms.AddListeners([]types.StoreKey{testStoreKey1})
+	require.Equal(t, 1, len(ms.listeners))
+
+	require.NoError(t, ms.LoadLatestVersion())
+	cacheMulti := ms.CacheMultiStore()
+
+	store := cacheMulti.GetKVStore(testStoreKey1)
+	store.Set([]byte{1}, []byte{1})
+	require.Empty(t, ms.PopStateCache())
+
+	// writes are observed when cache store commit.
+	cacheMulti.Write()
+	require.Equal(t, 1, len(ms.PopStateCache()))
+
+	// test no listening on unobserved store
+	store = cacheMulti.GetKVStore(testStoreKey2)
+	store.Set([]byte{1}, []byte{1})
+	require.Empty(t, ms.PopStateCache())
+
+	// writes are not observed when cache store commit
+	cacheMulti.Write()
+	require.Empty(t, ms.PopStateCache())
 }

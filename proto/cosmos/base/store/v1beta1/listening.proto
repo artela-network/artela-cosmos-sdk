@@ -14,3 +14,10 @@ message StoreKVPair {
   bytes key        = 3;
   bytes value      = 4;
 }
+
+message StoreKVPairs {
+  repeated StoreKVPair pairs = 1;
+  int64 block_height = 2;
+  string store_key = 3;
+  bytes key_prefix = 4;
+}
