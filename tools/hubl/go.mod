@@ -134,3 +134,5 @@ require (
 	pgregory.net/rapid v1.0.0 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/jhump/protoreflect => github.com/kocubinski/protoreflect v1.15.2-alpha1
