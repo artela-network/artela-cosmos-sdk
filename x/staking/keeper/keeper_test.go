@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec/address"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -39,11 +40,16 @@ type KeeperTestSuite struct {
 	accountKeeper *stakingtestutil.MockAccountKeeper
 	queryClient   stakingtypes.QueryClient
 	msgServer     stakingtypes.MsgServer
+	kr            keyring.Keyring
+
+	addr    []sdk.AccAddress
+	valAddr []sdk.ValAddress
 }
 
 func (s *KeeperTestSuite) SetupTest() {
 	require := s.Require()
 	key := storetypes.NewKVStoreKey(stakingtypes.StoreKey)
+
 	storeService := runtime.NewKVStoreService(key)
 	testCtx := testutil.DefaultContextWithDB(s.T(), key, storetypes.NewTransientStoreKey("transient_test"))
 	ctx := testCtx.Ctx.WithBlockHeader(cmtproto.Header{Time: cmttime.Now()})
@@ -66,6 +72,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	)
 	require.NoError(keeper.SetParams(ctx, stakingtypes.DefaultParams()))
 
+	s.kr = keyring.NewInMemory(encCfg.Codec)
 	s.ctx = ctx
 	s.stakingKeeper = keeper
 	s.bankKeeper = bankKeeper
@@ -76,6 +83,10 @@ func (s *KeeperTestSuite) SetupTest() {
 	stakingtypes.RegisterQueryServer(queryHelper, stakingkeeper.Querier{Keeper: keeper})
 	s.queryClient = stakingtypes.NewQueryClient(queryHelper)
 	s.msgServer = stakingkeeper.NewMsgServerImpl(keeper)
+
+	addrs := simtestutil.CreateIncrementalAccounts(4)
+	s.valAddr = simtestutil.ConvertAddrsToValAddrs(addrs[:2])
+	s.addr = addrs[2:]
 }
 
 func (s *KeeperTestSuite) TestParams() {
