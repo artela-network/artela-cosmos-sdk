@@ -97,7 +97,7 @@ func (gs *Store) CacheWrapWithTrace(_ io.Writer, _ types.TraceContext) types.Cac
 }
 
 // CacheWrapWithListeners implements the CacheWrapper interface.
-func (gs *Store) CacheWrapWithListeners(_ types.StoreKey, _ []types.WriteListener) types.CacheWrap {
+func (gs *Store) CacheWrapWithListeners(storeKey types.StoreKey, listeners any) types.CacheWrap {
 	panic("cannot CacheWrapWithListeners a GasKVStore")
 }
 

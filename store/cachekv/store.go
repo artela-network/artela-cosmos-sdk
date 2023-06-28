@@ -2,11 +2,11 @@ package cachekv
 
 import (
 	"bytes"
-	"github.com/cosmos/cosmos-sdk/store/cachekv/internal"
-	"github.com/cosmos/cosmos-sdk/store/listenkv"
 	"io"
 	"sort"
 	"sync"
+
+	"github.com/cosmos/cosmos-sdk/store/cachekv/internal"
 
 	dbm "github.com/tendermint/tm-db"
 
@@ -401,8 +401,4 @@ func (store *Store) setCacheValue(key, value []byte, dirty bool) {
 	if dirty {
 		store.unsortedCache[keyStr] = struct{}{}
 	}
-}
-
-func (store *Store) CacheWrapWithListeners(storeKey types.StoreKey, listeners []types.WriteListener) types.CacheWrap {
-	return NewStore(listenkv.NewStore(store, storeKey, listeners))
 }

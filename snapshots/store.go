@@ -307,7 +307,7 @@ func (*Store) CacheWrapWithTrace(_ io.Writer, _ store.TraceContext) store.CacheW
 }
 
 // CacheWrapWithListeners implements the Store interface.
-func (*Store) CacheWrapWithListeners(_ store.StoreKey, _ []store.WriteListener) store.CacheWrap {
+func (*Store) CacheWrapWithListeners(storeKey store.StoreKey, listeners any) store.CacheWrap {
 	panic("cannot CacheWrapWithListeners a snapshot Store")
 }
 

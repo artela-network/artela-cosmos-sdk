@@ -23,43 +23,45 @@ but please do not over-use it. We try to keep all data structured
 and standard additions here would be better just to add to the Context struct
 */
 type Context struct {
-	ctx           context.Context
-	ms            MultiStore
-	header        tmproto.Header
-	headerHash    tmbytes.HexBytes
-	chainID       string
-	isGenesis     bool
-	txBytes       []byte
-	logger        log.Logger
-	voteInfo      []abci.VoteInfo
-	gasMeter      GasMeter
-	blockGasMeter GasMeter
-	checkTx       bool
-	recheckTx     bool // if recheckTx == true, then checkTx must also be true
-	minGasPrice   DecCoins
-	consParams    *abci.ConsensusParams
-	eventManager  *EventManager
+	ctx              context.Context
+	ms               MultiStore
+	header           tmproto.Header
+	headerHash       tmbytes.HexBytes
+	chainID          string
+	isGenesis        bool
+	txBytes          []byte
+	logger           log.Logger
+	voteInfo         []abci.VoteInfo
+	gasMeter         GasMeter
+	blockGasMeter    GasMeter
+	checkTx          bool
+	recheckTx        bool // if recheckTx == true, then checkTx must also be true
+	minGasPrice      DecCoins
+	consParams       *abci.ConsensusParams
+	eventManager     *EventManager
+	streamingManager stypes.StreamingManager
 }
 
 // Proposed rename, not done to avoid API breakage
 type Request = Context
 
 // Read-only accessors
-func (c Context) Context() context.Context    { return c.ctx }
-func (c Context) MultiStore() MultiStore      { return c.ms }
-func (c Context) BlockHeight() int64          { return c.header.Height }
-func (c Context) BlockTime() time.Time        { return c.header.Time }
-func (c Context) ChainID() string             { return c.chainID }
-func (c Context) IsGenesis() bool             { return c.isGenesis }
-func (c Context) TxBytes() []byte             { return c.txBytes }
-func (c Context) Logger() log.Logger          { return c.logger }
-func (c Context) VoteInfos() []abci.VoteInfo  { return c.voteInfo }
-func (c Context) GasMeter() GasMeter          { return c.gasMeter }
-func (c Context) BlockGasMeter() GasMeter     { return c.blockGasMeter }
-func (c Context) IsCheckTx() bool             { return c.checkTx }
-func (c Context) IsReCheckTx() bool           { return c.recheckTx }
-func (c Context) MinGasPrices() DecCoins      { return c.minGasPrice }
-func (c Context) EventManager() *EventManager { return c.eventManager }
+func (c Context) Context() context.Context                  { return c.ctx }
+func (c Context) MultiStore() MultiStore                    { return c.ms }
+func (c Context) BlockHeight() int64                        { return c.header.Height }
+func (c Context) BlockTime() time.Time                      { return c.header.Time }
+func (c Context) ChainID() string                           { return c.chainID }
+func (c Context) IsGenesis() bool                           { return c.isGenesis }
+func (c Context) TxBytes() []byte                           { return c.txBytes }
+func (c Context) Logger() log.Logger                        { return c.logger }
+func (c Context) VoteInfos() []abci.VoteInfo                { return c.voteInfo }
+func (c Context) GasMeter() GasMeter                        { return c.gasMeter }
+func (c Context) BlockGasMeter() GasMeter                   { return c.blockGasMeter }
+func (c Context) IsCheckTx() bool                           { return c.checkTx }
+func (c Context) IsReCheckTx() bool                         { return c.recheckTx }
+func (c Context) MinGasPrices() DecCoins                    { return c.minGasPrice }
+func (c Context) EventManager() *EventManager               { return c.eventManager }
+func (c Context) StreamingManager() stypes.StreamingManager { return c.streamingManager }
 
 // clone the header before returning
 func (c Context) BlockHeader() tmproto.Header {
@@ -93,6 +95,18 @@ func NewContext(ms MultiStore, header tmproto.Header, isCheckTx bool, logger log
 		minGasPrice:  DecCoins{},
 		eventManager: NewEventManager(),
 	}
+}
+
+func (c Context) Deadline() (deadline time.Time, ok bool) {
+	return c.ctx.Deadline()
+}
+
+func (c Context) Done() <-chan struct{} {
+	return c.ctx.Done()
+}
+
+func (c Context) Err() error {
+	return c.ctx.Err()
 }
 
 // WithContext returns a Context with an updated context.Context.
@@ -222,6 +236,12 @@ func (c Context) WithEventManager(em *EventManager) Context {
 	return c
 }
 
+// WithStreamingManager returns a Context with an updated streaming manager
+func (c Context) WithStreamingManager(sm stypes.StreamingManager) Context {
+	c.streamingManager = sm
+	return c
+}
+
 // TODO: remove???
 func (c Context) IsZero() bool {
 	return c.ms == nil
@@ -229,9 +249,12 @@ func (c Context) IsZero() bool {
 
 // WithValue is deprecated, provided for backwards compatibility
 // Please use
-//     ctx = ctx.WithContext(context.WithValue(ctx.Context(), key, false))
+//
+//	ctx = ctx.WithContext(context.WithValue(ctx.Context(), key, false))
+//
 // instead of
-//     ctx = ctx.WithValue(key, false)
+//
+//	ctx = ctx.WithValue(key, false)
 func (c Context) WithValue(key, value interface{}) Context {
 	c.ctx = context.WithValue(c.ctx, key, value)
 	return c
@@ -239,9 +262,12 @@ func (c Context) WithValue(key, value interface{}) Context {
 
 // Value is deprecated, provided for backwards compatibility
 // Please use
-//     ctx.Context().Value(key)
+//
+//	ctx.Context().Value(key)
+//
 // instead of
-//     ctx.Value(key)
+//
+//	ctx.Value(key)
 func (c Context) Value(key interface{}) interface{} {
 	return c.ctx.Value(key)
 }

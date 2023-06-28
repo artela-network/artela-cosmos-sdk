@@ -25,6 +25,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	pruningtypes "github.com/cosmos/cosmos-sdk/pruning/types"
+	"github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
 	"github.com/cosmos/cosmos-sdk/store/rootmulti"
@@ -872,19 +873,19 @@ func testTxDecoder(cdc *codec.LegacyAmino) sdk.TxDecoder {
 func anteHandlerTxTest(t *testing.T, capKey sdk.StoreKey, storeKey []byte) sdk.AnteHandler {
 	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
 		store := ctx.KVStore(capKey)
-		txTest := tx.(txTest)
+		counter, failOnAnte := parseTxMemo(t, tx)
 
-		if txTest.FailOnAnte {
+		if failOnAnte {
 			return ctx, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "ante handler failure")
 		}
 
-		_, err := incrementingCounter(t, store, storeKey, txTest.Counter)
+		_, err := incrementingCounter(t, store, storeKey, counter)
 		if err != nil {
 			return ctx, err
 		}
 
 		ctx.EventManager().EmitEvents(
-			counterEvent("ante_handler", txTest.Counter),
+			counterEvent("ante_handler", counter),
 		)
 
 		return ctx, nil
@@ -990,8 +991,10 @@ func TestCheckTx(t *testing.T) {
 	codec := codec.NewLegacyAmino()
 	registerTestCodec(codec)
 
+	encCfg := params.MakeTestEncodingConfig()
+
 	for i := int64(0); i < nTxs; i++ {
-		tx := newTxCounter(i, 0) // no messages
+		tx := newWrappedTxCounter(encCfg.TxConfig, i, 0)
 		txBytes, err := codec.Marshal(tx)
 		require.NoError(t, err)
 		r := app.CheckTx(abci.RequestCheckTx{Tx: txBytes})
