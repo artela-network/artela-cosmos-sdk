@@ -4,7 +4,7 @@ import (
 	gocontext "context"
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -83,9 +83,9 @@ func (s *KeeperTestSuite) TestGRPCQueryDelegation() {
 	pk := ed25519.GenPrivKey().PubKey()
 	require.NotNil(pk)
 
-	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
+	comm := types.NewCommissionRates(sdkmath.LegacyNewDec(0), sdkmath.LegacyNewDec(0), sdkmath.LegacyNewDec(0))
 
-	msg, err := types.NewMsgCreateValidator(ValAddr, pk, sdk.NewCoin("stake", sdk.NewInt(10)), types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+	msg, err := types.NewMsgCreateValidator(ValAddr, pk, sdk.NewCoin("stake", sdkmath.NewInt(10)), types.Description{Moniker: "NewVal"}, comm, sdkmath.OneInt())
 	require.NoError(err)
 
 	res, err := msgServer.CreateValidator(ctx, msg)
@@ -161,9 +161,9 @@ func (s *KeeperTestSuite) TestGRPCQueryValidatorDelegation() {
 	pk := ed25519.GenPrivKey().PubKey()
 	require.NotNil(pk)
 
-	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
+	comm := types.NewCommissionRates(sdkmath.LegacyNewDec(0), sdkmath.LegacyNewDec(0), sdkmath.LegacyNewDec(0))
 
-	msg, err := types.NewMsgCreateValidator(ValAddr, pk, sdk.NewCoin("stake", sdk.NewInt(10)), types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+	msg, err := types.NewMsgCreateValidator(ValAddr, pk, sdk.NewCoin("stake", sdkmath.NewInt(10)), types.Description{Moniker: "NewVal"}, comm, sdkmath.OneInt())
 	require.NoError(err)
 
 	res, err := msgServer.CreateValidator(ctx, msg)
@@ -236,9 +236,9 @@ func (s *KeeperTestSuite) TestGRPCQueryUnbondingDelegations() {
 	pk := ed25519.GenPrivKey().PubKey()
 	require.NotNil(pk)
 
-	comm := types.NewCommissionRates(math.LegacyNewDec(0), math.LegacyNewDec(0), math.LegacyNewDec(0))
+	comm := types.NewCommissionRates(sdkmath.LegacyNewDec(0), sdkmath.LegacyNewDec(0), sdkmath.LegacyNewDec(0))
 
-	msg, err := types.NewMsgCreateValidator(ValAddr, pk, sdk.NewCoin("stake", sdk.NewInt(10)), types.Description{Moniker: "NewVal"}, comm, math.OneInt())
+	msg, err := types.NewMsgCreateValidator(ValAddr, pk, sdk.NewCoin("stake", sdkmath.NewInt(10)), types.Description{Moniker: "NewVal"}, comm, sdkmath.OneInt())
 	require.NoError(err)
 
 	res, err := msgServer.CreateValidator(ctx, msg)
@@ -266,7 +266,7 @@ func (s *KeeperTestSuite) TestGRPCQueryUnbondingDelegations() {
 				unMsg := &types.MsgUndelegate{
 					DelegatorAddress: Addr.String(),
 					ValidatorAddress: ValAddr.String(),
-					Amount:           sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(50)),
+					Amount:           sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(50)),
 				}
 				_, err = msgServer.Undelegate(ctx, unMsg)
 				require.NoError(err)
@@ -299,6 +299,81 @@ func (s *KeeperTestSuite) TestGRPCQueryUnbondingDelegations() {
 				require.NoError(err)
 				require.Equal(res.Unbond.DelegatorAddress, Addr.String())
 				require.Equal(res.Unbond.ValidatorAddress, ValAddr.String())
+
+			}
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestGRPCQueryValidatorUnbondingDelegations() {
+	ctx, keeper, queryClient, msgServer := s.ctx, s.stakingKeeper, s.queryClient, s.msgServer
+	require := s.Require()
+	s.execExpectCalls()
+
+	pk := ed25519.GenPrivKey().PubKey()
+	require.NotNil(pk)
+
+	comm := types.NewCommissionRates(sdkmath.LegacyNewDec(0), sdkmath.LegacyNewDec(0), sdkmath.LegacyNewDec(0))
+
+	msg, err := types.NewMsgCreateValidator(ValAddr, pk, sdk.NewCoin("stake", sdkmath.NewInt(10)), types.Description{Moniker: "NewVal"}, comm, sdkmath.OneInt())
+	require.NoError(err)
+
+	res, err := msgServer.CreateValidator(ctx, msg)
+	require.NoError(err)
+	require.NotNil(res)
+
+	testCases := []struct {
+		name     string
+		preRun   func()
+		req      types.QueryValidatorUnbondingDelegationsRequest
+		expecErr bool
+		errorMsg string
+	}{
+		{
+			name: "happy path",
+			preRun: func() {
+				msg := &types.MsgDelegate{
+					DelegatorAddress: Addr.String(),
+					ValidatorAddress: ValAddr.String(),
+					Amount:           sdk.Coin{Denom: sdk.DefaultBondDenom, Amount: keeper.TokensFromConsensusPower(s.ctx, int64(100))},
+				}
+				_, err := msgServer.Delegate(ctx, msg)
+				require.NoError(err)
+
+				unMsg := &types.MsgUndelegate{
+					DelegatorAddress: Addr.String(),
+					ValidatorAddress: ValAddr.String(),
+					Amount:           sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(50)),
+				}
+				_, err = msgServer.Undelegate(ctx, unMsg)
+				require.NoError(err)
+			},
+			req: types.QueryValidatorUnbondingDelegationsRequest{
+				ValidatorAddr: ValAddr.String(),
+			},
+			expecErr: false,
+			errorMsg: "",
+		},
+		{
+			name:   "invalid delegator addr",
+			preRun: func() {},
+			req: types.QueryValidatorUnbondingDelegationsRequest{
+				ValidatorAddr: "invalid address",
+			},
+			expecErr: true,
+			errorMsg: "decoding bech32 failed",
+		},
+	}
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			tc.preRun()
+			res, err := queryClient.ValidatorUnbondingDelegations(gocontext.Background(), &tc.req)
+			if tc.expecErr {
+				require.Error(err, tc.errorMsg)
+			} else {
+				require.NoError(err)
+				require.Equal(len(res.UnbondingResponses), 1)
+				require.Equal(res.UnbondingResponses[0].DelegatorAddress, Addr.String())
 
 			}
 		})
