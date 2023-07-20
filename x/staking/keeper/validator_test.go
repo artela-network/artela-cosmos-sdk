@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -57,6 +58,8 @@ func (s *KeeperTestSuite) TestValidator() {
 	consAddr, err := validator.GetConsAddr()
 	require.NoError(err)
 	resVal, err := keeper.GetValidatorByConsAddr(ctx, consAddr)
+	fmt.Printf("resVal: %v\n", resVal)
+	fmt.Printf("validator: %v\n", validator)
 	require.NoError(err)
 	require.True(validator.MinEqual(&resVal))
 

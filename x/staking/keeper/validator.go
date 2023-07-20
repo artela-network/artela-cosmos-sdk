@@ -43,17 +43,18 @@ func (k Keeper) mustGetValidator(ctx context.Context, addr sdk.ValAddress) types
 
 // GetValidatorByConsAddr gets a single validator by consensus address
 func (k Keeper) GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (validator types.Validator, err error) {
-	store := k.storeService.OpenKVStore(ctx)
-	opAddr, err := store.Get(types.GetValidatorByConsAddrKey(consAddr))
-	if err != nil {
-		return validator, err
-	}
+	// store := k.storeService.OpenKVStore(ctx)
+	// opAddr, err := store.Get(types.GetValidatorByConsAddrKey(consAddr))
+	// if err != nil {
+	// 	return validator, err
+	// }
 
-	if opAddr == nil {
-		return validator, types.ErrNoValidatorFound
-	}
+	// if opAddr == nil {
+	// 	return validator, types.ErrNoValidatorFound
+	// }
 
-	return k.GetValidator(ctx, opAddr)
+	// return k.GetValidator(ctx, opAddr)
+	return k.ValByConsAddr.Get(ctx, types.GetValidatorByConsAddrKey(consAddr))
 }
 
 func (k Keeper) mustGetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) types.Validator {
@@ -78,8 +79,10 @@ func (k Keeper) SetValidatorByConsAddr(ctx context.Context, validator types.Vali
 	if err != nil {
 		return err
 	}
-	store := k.storeService.OpenKVStore(ctx)
-	return store.Set(types.GetValidatorByConsAddrKey(consPk), validator.GetOperator())
+	fmt.Printf("validator -----> : %v\n", validator)
+	// store := k.storeService.OpenKVStore(ctx)
+	// return store.Set(types.GetValidatorByConsAddrKey(consPk), validator.GetOperator())
+	return k.ValByConsAddr.Set(ctx, types.GetValidatorByConsAddrKey(consPk), validator)
 }
 
 // SetValidatorByPowerIndex sets a validator by power index
