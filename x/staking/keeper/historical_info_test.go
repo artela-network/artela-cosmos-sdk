@@ -4,10 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"reflect"
 	"strconv"
 	"time"
-	"unsafe"
 
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	version "github.com/cometbft/cometbft/proto/tendermint/version"
@@ -56,10 +54,6 @@ func (s *KeeperTestSuite) TestHistoricalInfo() {
 	recv, err = keeper.GetHistoricalInfo(ctx, 2)
 	require.ErrorIs(err, stakingtypes.ErrNoHistoricalInfo, "HistoricalInfo found after delete")
 	require.Equal(stakingtypes.HistoricalInfo{}, recv, "HistoricalInfo is not empty")
-}
-
-func GetUnexportedField(field reflect.Value) interface{} {
-	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface()
 }
 
 func CollsMigration(
