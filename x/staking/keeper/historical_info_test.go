@@ -1,10 +1,21 @@
 package keeper_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"reflect"
+	"strconv"
+	"time"
+	"unsafe"
+
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	version "github.com/cometbft/cometbft/proto/tendermint/version"
 
 	"cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -45,6 +56,92 @@ func (s *KeeperTestSuite) TestHistoricalInfo() {
 	recv, err = keeper.GetHistoricalInfo(ctx, 2)
 	require.ErrorIs(err, stakingtypes.ErrNoHistoricalInfo, "HistoricalInfo found after delete")
 	require.Equal(stakingtypes.HistoricalInfo{}, recv, "HistoricalInfo is not empty")
+}
+
+func GetUnexportedField(field reflect.Value) interface{} {
+	return reflect.NewAt(field.Type(), unsafe.Pointer(field.UnsafeAddr())).Elem().Interface()
+}
+
+func CollsMigration(
+	ctx sdk.Context,
+	storeKey *storetypes.KVStoreKey,
+	iterations int,
+	writeElem func(int64),
+	targetHash string,
+) error {
+	for i := int64(0); i < int64(iterations); i++ {
+		writeElem(i)
+	}
+
+	allkvs := []byte{}
+	it := ctx.KVStore(storeKey).Iterator(nil, nil)
+	defer it.Close()
+	for ; it.Valid(); it.Next() {
+		kv := append(it.Key(), it.Value()...)
+		allkvs = append(allkvs, kv...)
+	}
+
+	hash := sha256.Sum256(allkvs)
+	if hex.EncodeToString(hash[:]) != targetHash {
+		return fmt.Errorf("hashes don't match: %s != %s\n", hex.EncodeToString(hash[:]), targetHash)
+	}
+
+	return nil
+}
+
+func (s *KeeperTestSuite) TestHistoricalInfoCollMigration() {
+	// reset suite
+	s.SetupTest()
+	ctx, keeper := s.ctx, s.stakingKeeper
+	require := s.Require()
+
+	_, addrVals := createValAddrs(50)
+
+	validators := make([]stakingtypes.Validator, len(addrVals))
+
+	for i, valAddr := range addrVals {
+		validators[i] = testutil.NewValidator(s.T(), valAddr, PKs[i])
+	}
+
+	err := CollsMigration(
+		ctx,
+		s.key,
+		10000,
+		func(i int64) {
+			header := cmtproto.Header{
+				Version: version.Consensus{},
+				ChainID: "HelloChain" + strconv.Itoa(int(i)),
+				Height:  i,
+				Time:    time.Unix(123456789+i, 12345),
+				LastBlockId: cmtproto.BlockID{
+					Hash: []byte("LastBlockHash"),
+					PartSetHeader: cmtproto.PartSetHeader{
+						Total: 100 + uint32(i),
+						Hash:  []byte("LastBlockPartHash"),
+					},
+				},
+				LastCommitHash:     getTestHash("LastCommitHash", i),
+				DataHash:           getTestHash("DataHash", i),
+				ValidatorsHash:     getTestHash("ValidatorsHash", i),
+				NextValidatorsHash: getTestHash("NextValidatorsHash", i),
+				ConsensusHash:      getTestHash("ConsensusHash", i),
+				AppHash:            getTestHash("AppHash", i),
+				LastResultsHash:    getTestHash("LastResultsHash", i),
+				EvidenceHash:       getTestHash("EvidenceHash", i),
+				ProposerAddress:    getTestHash("ProposerAddress", i),
+			}
+			hi := stakingtypes.NewHistoricalInfo(header, validators, keeper.PowerReduction(ctx))
+			require.NoError(keeper.SetHistoricalInfo(ctx, i, &hi))
+		},
+		"a6a907d7c465d0cd2d437f7b8b28f573a4d98452aca0a21c5e7c8997cd9866b8",
+	)
+
+	require.NoError(err)
+}
+
+func getTestHash(field string, i int64) []byte {
+	hash := sha256.Sum256([]byte(field + strconv.Itoa(int(i))))
+	return hash[:]
 }
 
 func (s *KeeperTestSuite) TestTrackHistoricalInfo() {

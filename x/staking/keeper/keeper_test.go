@@ -35,6 +35,8 @@ type KeeperTestSuite struct {
 
 	ctx           sdk.Context
 	stakingKeeper *stakingkeeper.Keeper
+	key           *storetypes.KVStoreKey
+
 	bankKeeper    *stakingtestutil.MockBankKeeper
 	accountKeeper *stakingtestutil.MockAccountKeeper
 	queryClient   stakingtypes.QueryClient
@@ -43,9 +45,9 @@ type KeeperTestSuite struct {
 
 func (s *KeeperTestSuite) SetupTest() {
 	require := s.Require()
-	key := storetypes.NewKVStoreKey(stakingtypes.StoreKey)
-	storeService := runtime.NewKVStoreService(key)
-	testCtx := testutil.DefaultContextWithDB(s.T(), key, storetypes.NewTransientStoreKey("transient_test"))
+	s.key = storetypes.NewKVStoreKey(stakingtypes.StoreKey)
+	storeService := runtime.NewKVStoreService(s.key)
+	testCtx := testutil.DefaultContextWithDB(s.T(), s.key, storetypes.NewTransientStoreKey("transient_test"))
 	ctx := testCtx.Ctx.WithBlockHeader(cmtproto.Header{Time: cmttime.Now()})
 	encCfg := moduletestutil.MakeTestEncodingConfig()
 
