@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
@@ -24,17 +25,34 @@ type Keeper struct {
 	cdc          codec.BinaryCodec
 	storeService store.KVStoreService
 	authKeeper   feegrant.AccountKeeper
+
+	Schema            collections.Schema
+	FeeAllowanceQueue collections.Map[collections.Pair[time.Time, []byte], []byte]
 }
 
 var _ ante.FeegrantKeeper = &Keeper{}
 
 // NewKeeper creates a feegrant Keeper
 func NewKeeper(cdc codec.BinaryCodec, storeService store.KVStoreService, ak feegrant.AccountKeeper) Keeper {
-	return Keeper{
+	sb := collections.NewSchemaBuilder(storeService)
+	k := &Keeper{
 		cdc:          cdc,
 		storeService: storeService,
 		authKeeper:   ak,
+		FeeAllowanceQueue: collections.NewMap(
+			sb,
+			feegrant.FeeAllowanceQueueKeyPrefix,
+			"fee_allowance_queue",
+			collections.PairKeyCodec(sdk.TimeKey, collections.BytesKey),
+			collections.BytesValue,
+		),
 	}
+	schema, err := sb.Build()
+	if err != nil {
+		panic(err)
+	}
+	k.Schema = schema
+	return *k
 }
 
 // Logger returns a module-specific logger.
@@ -313,8 +331,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*feegrant.GenesisState, erro
 }
 
 func (k Keeper) addToFeeAllowanceQueue(ctx context.Context, grantKey []byte, exp *time.Time) error {
-	store := k.storeService.OpenKVStore(ctx)
-	return store.Set(feegrant.FeeAllowancePrefixQueue(exp, grantKey), []byte{})
+	return k.FeeAllowanceQueue.Set(ctx, collections.Join(*exp, grantKey), []byte{})
 }
 
 // RemoveExpiredAllowances iterates grantsByExpiryQueue and deletes the expired grants.

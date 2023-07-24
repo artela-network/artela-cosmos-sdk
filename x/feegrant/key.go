@@ -3,6 +3,8 @@ package feegrant
 import (
 	time "time"
 
+	"cosmossdk.io/collections"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 )
@@ -28,7 +30,7 @@ var (
 
 	// FeeAllowanceQueueKeyPrefix is the set of the kvstore for fee allowance keys data
 	// - 0x01<allowance_prefix_queue_key_bytes>: <empty value>
-	FeeAllowanceQueueKeyPrefix = []byte{0x01}
+	FeeAllowanceQueueKeyPrefix = collections.NewPrefix(1)
 )
 
 // FeeAllowanceKey is the canonical key to store a grant from granter to grantee
