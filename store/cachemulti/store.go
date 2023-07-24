@@ -3,6 +3,7 @@ package cachemulti
 import (
 	"fmt"
 	"io"
+	"sync"
 
 	dbm "github.com/cosmos/cosmos-db"
 
@@ -122,9 +123,15 @@ func (cms Store) GetStoreType() types.StoreType {
 // Write calls Write on each underlying store.
 func (cms Store) Write() {
 	cms.db.Write()
+	var wg sync.WaitGroup
 	for _, store := range cms.stores {
-		store.Write()
+		wg.Add(1)
+		go func(store types.CacheWrap) {
+			store.Write()
+			wg.Done()
+		}(store)
 	}
+	wg.Wait()
 }
 
 // Implements CacheWrapper.
