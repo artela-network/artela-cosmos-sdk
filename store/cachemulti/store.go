@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	dbm "github.com/cosmos/cosmos-db"
 
@@ -124,6 +125,9 @@ func (cms Store) GetStoreType() types.StoreType {
 func (cms Store) Write() {
 	cms.db.Write()
 	var wg sync.WaitGroup
+
+	now := time.Now()
+
 	for _, store := range cms.stores {
 		wg.Add(1)
 		go func(store types.CacheWrap) {
@@ -132,6 +136,7 @@ func (cms Store) Write() {
 		}(store)
 	}
 	wg.Wait()
+	fmt.Println("Write time:::::::::::::: ", time.Since(now))
 }
 
 // Implements CacheWrapper.
