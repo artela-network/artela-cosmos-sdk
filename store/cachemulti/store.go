@@ -3,7 +3,6 @@ package cachemulti
 import (
 	"fmt"
 	"io"
-	"sync"
 	"time"
 
 	dbm "github.com/cosmos/cosmos-db"
@@ -124,19 +123,19 @@ func (cms Store) GetStoreType() types.StoreType {
 // Write calls Write on each underlying store.
 func (cms Store) Write() {
 	cms.db.Write()
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 
 	now := time.Now()
 
 	for _, store := range cms.stores {
-		wg.Add(1)
-		go func(store types.CacheWrap) {
-			store.Write()
-			wg.Done()
-		}(store)
+		// wg.Add(1)
+		// go func(store types.CacheWrap) {
+		store.Write()
+		// 	wg.Done()
+		// }(store)
 	}
-	wg.Wait()
-	fmt.Println("Write time:::::::::::::: ", time.Since(now))
+	// wg.Wait()
+	fmt.Println("Sync Write time:::::::::::::: ", time.Since(now))
 }
 
 // Implements CacheWrapper.
