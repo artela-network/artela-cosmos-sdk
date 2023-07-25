@@ -157,7 +157,8 @@ type MultiStore interface {
 // From MultiStore.CacheMultiStore()....
 type CacheMultiStore interface {
 	MultiStore
-	Write() // Writes operations to underlying KVStore
+	Write()         // Writes operations to underlying KVStore
+	WriteParallel() // Writes operations to underlying KVStore in parallel
 }
 
 // CommitMultiStore is an interface for a MultiStore without cache capabilities.
