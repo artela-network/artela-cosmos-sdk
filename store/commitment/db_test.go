@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"cosmossdk.io/store/v2/commitment/iavl"
-	iavltypes "cosmossdk.io/store/v2/commitment/iavl/types"
 	"cosmossdk.io/store/v2/commitment/types"
 
 	"cosmossdk.io/log"
@@ -14,7 +13,7 @@ import (
 
 func generateTree(treeType string) types.Tree {
 	if treeType == "iavl" {
-		cfg := iavltypes.DefaultConfig()
+		cfg := iavl.DefaultConfig()
 		db := dbm.NewMemDB()
 		tree := iavl.NewIavlTree(db, log.NewNopLogger(), cfg)
 

@@ -3,7 +3,6 @@ package iavl
 import (
 	"fmt"
 
-	"cosmossdk.io/store/v2/commitment/iavl/types"
 	commitmenttypes "cosmossdk.io/store/v2/commitment/types"
 
 	log "cosmossdk.io/log"
@@ -20,7 +19,7 @@ type IavlTree struct {
 }
 
 // NewIavlTree creates a new IavlTree instance.
-func NewIavlTree(db dbm.DB, logger log.Logger, cfg *types.Config) *IavlTree {
+func NewIavlTree(db dbm.DB, logger log.Logger, cfg *Config) *IavlTree {
 	tree := iavl.NewMutableTree(db, cfg.CacheSize, cfg.SkipFastStorageUpgrade, logger)
 	return &IavlTree{
 		tree: tree,
