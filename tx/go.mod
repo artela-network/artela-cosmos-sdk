@@ -7,7 +7,7 @@ require (
 	cosmossdk.io/core v0.3.2
 	cosmossdk.io/math v1.0.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 	google.golang.org/protobuf v1.30.0
 )
 
