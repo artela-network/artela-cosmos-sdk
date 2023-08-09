@@ -6,7 +6,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.0-rc3
 	github.com/hashicorp/go-getter v1.7.0
 	github.com/otiai10/copy v1.7.0
-	github.com/rs/zerolog v1.28.0
+	github.com/rs/zerolog v1.30.0
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.4
 )
