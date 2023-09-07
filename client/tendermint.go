@@ -27,4 +27,6 @@ type TendermintRPC interface {
 		page, perPage *int,
 		orderBy string,
 	) (*coretypes.ResultTxSearch, error)
+
+	ConsensusParams(ctx context.Context, height *int64) (*coretypes.ResultConsensusParams, error)
 }
