@@ -15,6 +15,8 @@ type TendermintRPC interface {
 	Validators(ctx context.Context, height *int64, page, perPage *int) (*coretypes.ResultValidators, error)
 	Status(context.Context) (*coretypes.ResultStatus, error)
 	Block(ctx context.Context, height *int64) (*coretypes.ResultBlock, error)
+	BlockByHash(ctx context.Context, hash []byte) (*coretypes.ResultBlock, error)
+	BlockResults(ctx context.Context, height *int64) (*coretypes.ResultBlockResults, error)
 	BlockchainInfo(ctx context.Context, minHeight, maxHeight int64) (*coretypes.ResultBlockchainInfo, error)
 	Commit(ctx context.Context, height *int64) (*coretypes.ResultCommit, error)
 	Tx(ctx context.Context, hash []byte, prove bool) (*coretypes.ResultTx, error)
@@ -25,4 +27,6 @@ type TendermintRPC interface {
 		page, perPage *int,
 		orderBy string,
 	) (*coretypes.ResultTxSearch, error)
+
+	ConsensusParams(ctx context.Context, height *int64) (*coretypes.ResultConsensusParams, error)
 }
