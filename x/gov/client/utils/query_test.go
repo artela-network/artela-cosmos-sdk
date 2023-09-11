@@ -51,6 +51,10 @@ func (mock TxSearchMock) Block(ctx context.Context, height *int64) (*coretypes.R
 	return &coretypes.ResultBlock{Block: &tmtypes.Block{}}, nil
 }
 
+func (mock TxSearchMock) InsertTxToCurrentProposal(ctx context.Context, tx tmtypes.Tx) error {
+	return nil
+}
+
 func TestGetPaginatedVotes(t *testing.T) {
 	encCfg := moduletestutil.MakeTestEncodingConfig(gov.AppModuleBasic{})
 

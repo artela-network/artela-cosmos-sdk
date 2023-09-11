@@ -29,6 +29,10 @@ func (c MockClient) BroadcastTxSync(ctx context.Context, tx tmtypes.Tx) (*corety
 	return nil, c.err
 }
 
+func (c MockClient) InsertTxToCurrentProposal(ctx context.Context, tx tmtypes.Tx) error {
+	return nil
+}
+
 func CreateContextWithErrorAndMode(err error, mode string) Context {
 	return Context{
 		Client:        MockClient{err: err},

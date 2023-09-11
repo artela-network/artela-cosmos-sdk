@@ -5,6 +5,7 @@ import (
 
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 )
 
 // TendermintRPC defines the interface of a Tendermint RPC client needed for
@@ -29,4 +30,5 @@ type TendermintRPC interface {
 	) (*coretypes.ResultTxSearch, error)
 
 	ConsensusParams(ctx context.Context, height *int64) (*coretypes.ResultConsensusParams, error)
+	InsertTxToCurrentProposal(ctx context.Context, tx tmtypes.Tx) error
 }

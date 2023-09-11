@@ -39,3 +39,7 @@ func (m MockTendermintRPC) ABCIQueryWithOptions(
 ) (*coretypes.ResultABCIQuery, error) {
 	return &coretypes.ResultABCIQuery{Response: m.responseQuery}, nil
 }
+
+func (mock MockTendermintRPC) InsertTxToCurrentProposal(ctx context.Context, tx tmtypes.Tx) error {
+	return nil
+}
