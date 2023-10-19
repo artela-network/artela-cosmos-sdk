@@ -12,7 +12,7 @@ require (
 	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/99designs/keyring v1.2.1
 	github.com/armon/go-metrics v0.4.1
-	github.com/artela-network/artelasdk v0.3.3-beta
+	github.com/artela-network/artelasdk v0.4.0-beta
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/chzyer/readline v1.5.1
@@ -197,9 +197,4 @@ retract (
 	[v0.45.0, v0.45.8]
 	// do not use
 	v0.43.0
-)
-
-replace (
-	github.com/artela-network/artelasdk => ../artelasdk
-	github.com/artela-network/runtime => ../runtime
 )
