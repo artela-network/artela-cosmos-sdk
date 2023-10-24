@@ -4,12 +4,13 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"github.com/artela-network/artelasdk/chaincoreext/scheduler"
 	"os"
 	"sort"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/artela-network/aspect-core/chaincoreext/scheduler"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -231,7 +232,7 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 			panic(fmt.Errorf("EndBlock listening hook failed, height: %d, err: %w", req.Height, err))
 		}
 	}
-	//schedule
+	// schedule
 	if scheduler.TaskInstance() != nil {
 		confirm, checkErr := scheduler.TaskInstance().Check()
 		if checkErr != nil {
@@ -364,9 +365,9 @@ func (app *BaseApp) ProcessProposal(req abci.RequestProcessProposal) (resp abci.
 		}
 	}()
 
-	//chainID := app.chainID
-	//nonce := uint64(req.Height) // use height as nonce
-	//scheduler.NewTaskManager(req.Height, nonce, chainID)
+	// chainID := app.chainID
+	// nonce := uint64(req.Height) // use height as nonce
+	// scheduler.NewTaskManager(req.Height, nonce, chainID)
 
 	resp = app.processProposal(app.processProposalState.ctx, req)
 	return resp
