@@ -1,9 +1,11 @@
 package cosmos
 
 import (
-	"github.com/artela-network/artelasdk/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/big"
+
+	"github.com/artela-network/aspect-core/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type AspectCosmosProvider interface {
