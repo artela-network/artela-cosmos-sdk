@@ -13,5 +13,6 @@ type AspectCosmosProvider interface {
 
 	FilterAspectTx(tx sdk.Msg) bool
 	CreateTxPointRequest(sdkCtx sdk.Context, msg sdk.Msg, txIndex int64, baseFee *big.Int, innerTx *types.EthStackTransaction) (*types.EthTxAspect, error)
+	CreateTxPointRequestWithData(data []byte) (*types.EthTxAspect, error)
 	CreateBlockPointRequest(sdkCtx sdk.Context) *types.EthBlockAspect
 }

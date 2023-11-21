@@ -415,6 +415,10 @@ func (app *BaseApp) setIndexEvents(ie []string) {
 	}
 }
 
+func (app *BaseApp) Aspect() *djpm.Aspect {
+	return app.aspect
+}
+
 // Seal seals a BaseApp. It prohibits any further modifications to a BaseApp.
 func (app *BaseApp) Seal() { app.sealed = true }
 
@@ -722,7 +726,6 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, re
 				}
 			}
 		}
-
 	}
 	// --------aspect FilterTx end ---  //
 
