@@ -210,6 +210,8 @@ replace (
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
 
+replace github.com/artela-network/aspect-core => ../aspect-core
+
 retract (
 	// revert fix https://github.com/cosmos/cosmos-sdk/pull/16331
 	v0.46.12
