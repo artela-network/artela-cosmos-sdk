@@ -252,8 +252,10 @@ github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da/go.mod h1:Q73ZrmV
 github.com/armon/go-metrics v0.4.1 h1:hR91U9KYmb6bLBYLQjyM+3j+rcd/UhE+G78SFnF8gJA=
 github.com/armon/go-metrics v0.4.1/go.mod h1:E6amYzXo6aW1tqzoZGT755KkbgrJsSdpwZ+3JqfkOG4=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
-github.com/artela-network/aspect-runtime v0.4.1-beta h1:uYGCOI6iTBq2SG+4zHrDAwMJi/0EmOSOpJgP/FcU4II=
-github.com/artela-network/aspect-runtime v0.4.1-beta/go.mod h1:l3kY2tlOo1k00xcNA1FuEAeihMMKiaQdZBn4SrumWns=
+github.com/artela-network/aspect-core v0.4.2-beta h1:rG6J6VlhyhJvbDhePIGyc4/TS8eYYuRVvzD3V+xdwrw=
+github.com/artela-network/aspect-core v0.4.2-beta/go.mod h1:nsGS6rs2kaLrl+o5b4VOgeFt5KxNuK1B3n8v5XkZdSA=
+github.com/artela-network/aspect-runtime v0.4.2-beta h1:oS+/2xybOXQDFPeuzRV1Hi3bQpQnwiFq8PpZAxAJBWk=
+github.com/artela-network/aspect-runtime v0.4.2-beta/go.mod h1:UWmkBhpNyDf3Pis5AfOxcnftgXVH1/ChTG/OZtmRvd4=
 github.com/aryann/difflib v0.0.0-20170710044230-e206f873d14a/go.mod h1:DAHtR1m6lCRdSC2Tm3DSWRPvIPr6xNKyeHdqDQSQT+A=
 github.com/aws/aws-lambda-go v1.13.3/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
 github.com/aws/aws-sdk-go v1.27.0/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
@@ -277,8 +279,8 @@ github.com/btcsuite/btcd/btcutil v1.1.2 h1:XLMbX8JQEiwMcYft2EGi8zPUkoa0abKIU6/BJ
 github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 h1:q0rUy8C/TYNBQS1+CGKw68tLOFYSNEs0TFnxxnS9+4U=
 github.com/bufbuild/protocompile v0.4.0 h1:LbFKd2XowZvQ/kajzguUp2DC9UEIQhIq77fZZlaQsNA=
 github.com/bufbuild/protocompile v0.4.0/go.mod h1:3v93+mbWn/v3xzN+31nwkJfrEpAUwp+BagBSZWx+TP8=
-github.com/bytecodealliance/wasmtime-go/v9 v9.0.0 h1:lkyiPbbo++bSmDyJVxDQwxxaiu3LOFVm0iBHnTS1W5A=
-github.com/bytecodealliance/wasmtime-go/v9 v9.0.0/go.mod h1:zpOxt1j5vj44AzXZVhS4H+hr39vMk4hDlyC42kGksbU=
+github.com/bytecodealliance/wasmtime-go/v14 v14.0.0 h1:ur7S3P+PAeJmgllhSrKnGQOAmmtUbLQxb/nw2NZiaEM=
+github.com/bytecodealliance/wasmtime-go/v14 v14.0.0/go.mod h1:tqOVEUjnXY6aGpSfM9qdVRR6G//Yc513fFYUdzZb/DY=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=
 github.com/bytedance/sonic v1.8.0 h1:ea0Xadu+sHlu7x5O3gKhRpQ1IKiMrSiHttPF0ybECuA=
 github.com/bytedance/sonic v1.8.0/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZXU064P/U=
