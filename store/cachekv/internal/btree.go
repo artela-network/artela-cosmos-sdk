@@ -3,8 +3,10 @@ package internal
 import (
 	"bytes"
 	"errors"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/status-im/keycard-go/hexutils"
 	"github.com/tidwall/btree"
 )
 
@@ -36,6 +38,7 @@ func NewBTree() BTree {
 }
 
 func (bt BTree) Set(key, value []byte) {
+	fmt.Println("###BTree store set", "key", hexutils.BytesToHex(key), "value", hexutils.BytesToHex(value))
 	bt.tree.Set(newItem(key, value))
 }
 
@@ -48,6 +51,7 @@ func (bt BTree) Get(key []byte) []byte {
 }
 
 func (bt BTree) Delete(key []byte) {
+	fmt.Println("###BTree store delete", "key", hexutils.BytesToHex(key))
 	bt.tree.Delete(newItem(key, nil))
 }
 

@@ -1,9 +1,11 @@
 package dbadapter
 
 import (
+	"fmt"
 	"io"
 
 	dbm "github.com/cometbft/cometbft-db"
+	"github.com/status-im/keycard-go/hexutils"
 
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
 	"github.com/cosmos/cosmos-sdk/store/tracekv"
@@ -37,6 +39,7 @@ func (dsa Store) Has(key []byte) bool {
 
 // Set wraps the underlying DB's Set method panicing on error.
 func (dsa Store) Set(key, value []byte) {
+	fmt.Println("###dsa store set", "key", hexutils.BytesToHex(key), "value", hexutils.BytesToHex(value))
 	types.AssertValidKey(key)
 	if err := dsa.DB.Set(key, value); err != nil {
 		panic(err)
@@ -45,6 +48,7 @@ func (dsa Store) Set(key, value []byte) {
 
 // Delete wraps the underlying DB's Delete method panicing on error.
 func (dsa Store) Delete(key []byte) {
+	fmt.Println("###dsa store delete", "key", hexutils.BytesToHex(key))
 	if err := dsa.DB.Delete(key); err != nil {
 		panic(err)
 	}

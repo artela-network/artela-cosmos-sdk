@@ -12,6 +12,7 @@ import (
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	ics23 "github.com/confio/ics23/go"
 	"github.com/cosmos/iavl"
+	"github.com/status-im/keycard-go/hexutils"
 
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
 	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
@@ -192,6 +193,7 @@ func (st *Store) CacheWrapWithTrace(w io.Writer, tc types.TraceContext) types.Ca
 
 // Implements types.KVStore.
 func (st *Store) Set(key, value []byte) {
+	fmt.Println("###iavl store set", "key", hexutils.BytesToHex(key), "value", hexutils.BytesToHex(value))
 	types.AssertValidKey(key)
 	types.AssertValidValue(value)
 	_, err := st.tree.Set(key, value)
@@ -222,6 +224,7 @@ func (st *Store) Has(key []byte) (exists bool) {
 
 // Implements types.KVStore.
 func (st *Store) Delete(key []byte) {
+	fmt.Println("###iavl store delete", "key", hexutils.BytesToHex(key))
 	defer telemetry.MeasureSince(time.Now(), "store", "iavl", "delete")
 	st.tree.Remove(key)
 }

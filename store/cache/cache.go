@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
 	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/status-im/keycard-go/hexutils"
 
 	lru "github.com/hashicorp/golang-lru"
 )
@@ -117,6 +118,7 @@ func (ckv *CommitKVStoreCache) Get(key []byte) []byte {
 // Set inserts a key/value pair into both the write-through cache and the
 // underlying CommitKVStore.
 func (ckv *CommitKVStoreCache) Set(key, value []byte) {
+	fmt.Println("###CommitKVStoreCache store set", "key", hexutils.BytesToHex(key), "value", hexutils.BytesToHex(value))
 	types.AssertValidKey(key)
 	types.AssertValidValue(value)
 
@@ -127,6 +129,7 @@ func (ckv *CommitKVStoreCache) Set(key, value []byte) {
 // Delete removes a key/value pair from both the write-through cache and the
 // underlying CommitKVStore.
 func (ckv *CommitKVStoreCache) Delete(key []byte) {
+	fmt.Println("###CommitKVStoreCache store delete", "key", hexutils.BytesToHex(key))
 	ckv.cache.Remove(string(key))
 	ckv.CommitKVStore.Delete(key)
 }

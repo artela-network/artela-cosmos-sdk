@@ -1,9 +1,11 @@
 package listenkv
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/status-im/keycard-go/hexutils"
 )
 
 var _ types.KVStore = &Store{}
@@ -33,6 +35,7 @@ func (s *Store) Get(key []byte) []byte {
 // Set implements the KVStore interface. It traces a write operation and
 // delegates the Set call to the parent KVStore.
 func (s *Store) Set(key []byte, value []byte) {
+	fmt.Println("###listenkv store set", "key", hexutils.BytesToHex(key), "value", hexutils.BytesToHex(value))
 	types.AssertValidKey(key)
 	s.parent.Set(key, value)
 	s.onWrite(false, key, value)
@@ -41,6 +44,7 @@ func (s *Store) Set(key []byte, value []byte) {
 // Delete implements the KVStore interface. It traces a write operation and
 // delegates the Delete call to the parent KVStore.
 func (s *Store) Delete(key []byte) {
+	fmt.Println("###listenkv store delete", "key", hexutils.BytesToHex(key))
 	s.parent.Delete(key)
 	s.onWrite(true, key, nil)
 }

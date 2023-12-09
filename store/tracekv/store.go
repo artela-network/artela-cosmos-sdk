@@ -3,10 +3,12 @@ package tracekv
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/status-im/keycard-go/hexutils"
 )
 
 const (
@@ -60,6 +62,7 @@ func (tkv *Store) Get(key []byte) []byte {
 // Set implements the KVStore interface. It traces a write operation and
 // delegates the Set call to the parent KVStore.
 func (tkv *Store) Set(key []byte, value []byte) {
+	fmt.Println("###trace store set", "key", hexutils.BytesToHex(key), "value", hexutils.BytesToHex(value))
 	types.AssertValidKey(key)
 	writeOperation(tkv.writer, writeOp, tkv.context, key, value)
 	tkv.parent.Set(key, value)
@@ -68,6 +71,7 @@ func (tkv *Store) Set(key []byte, value []byte) {
 // Delete implements the KVStore interface. It traces a write operation and
 // delegates the Delete call to the parent KVStore.
 func (tkv *Store) Delete(key []byte) {
+	fmt.Println("###trace store delete", "key", hexutils.BytesToHex(key))
 	writeOperation(tkv.writer, deleteOp, tkv.context, key, nil)
 	tkv.parent.Delete(key)
 }

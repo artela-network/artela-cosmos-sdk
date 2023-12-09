@@ -1,9 +1,11 @@
 package gaskv
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/status-im/keycard-go/hexutils"
 )
 
 var _ types.KVStore = &Store{}
@@ -45,6 +47,7 @@ func (gs *Store) Get(key []byte) (value []byte) {
 
 // Implements KVStore.
 func (gs *Store) Set(key []byte, value []byte) {
+	fmt.Println("###gaskv store set", "key", hexutils.BytesToHex(key), "value", hexutils.BytesToHex(value))
 	types.AssertValidKey(key)
 	types.AssertValidValue(value)
 	gs.gasMeter.ConsumeGas(gs.gasConfig.WriteCostFlat, types.GasWriteCostFlatDesc)
@@ -62,6 +65,7 @@ func (gs *Store) Has(key []byte) bool {
 
 // Implements KVStore.
 func (gs *Store) Delete(key []byte) {
+	fmt.Println("###gaskv store delete", "key", hexutils.BytesToHex(key))
 	// charge gas to prevent certain attack vectors even though space is being freed
 	gs.gasMeter.ConsumeGas(gs.gasConfig.DeleteCost, types.GasDeleteDesc)
 	gs.parent.Delete(key)

@@ -3,11 +3,13 @@ package prefix
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/cosmos/cosmos-sdk/store/cachekv"
 	"github.com/cosmos/cosmos-sdk/store/tracekv"
 	"github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/status-im/keycard-go/hexutils"
 )
 
 var _ types.KVStore = Store{}
@@ -70,6 +72,7 @@ func (s Store) Has(key []byte) bool {
 
 // Implements KVStore
 func (s Store) Set(key, value []byte) {
+	fmt.Println("###prefix store set", "key", hexutils.BytesToHex(key), "value", hexutils.BytesToHex(value))
 	types.AssertValidKey(key)
 	types.AssertValidValue(value)
 	s.parent.Set(s.key(key), value)
@@ -77,6 +80,7 @@ func (s Store) Set(key, value []byte) {
 
 // Implements KVStore
 func (s Store) Delete(key []byte) {
+	fmt.Println("###prefix store delete", "key", hexutils.BytesToHex(key))
 	s.parent.Delete(s.key(key))
 }
 

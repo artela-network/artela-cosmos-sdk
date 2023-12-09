@@ -72,6 +72,7 @@ func (store *Store) Get(key []byte) (value []byte) {
 
 // Set implements types.KVStore.
 func (store *Store) Set(key []byte, value []byte) {
+	fmt.Println("###cachekv store set", "key", hexutils.BytesToHex(key), "value", hexutils.BytesToHex(value))
 	store.mtx.Lock()
 	defer store.mtx.Unlock()
 
@@ -89,6 +90,7 @@ func (store *Store) Has(key []byte) bool {
 
 // Delete implements types.KVStore.
 func (store *Store) Delete(key []byte) {
+	fmt.Println("###cachekv store delete", "key", hexutils.BytesToHex(key))
 	store.mtx.Lock()
 	defer store.mtx.Unlock()
 
@@ -119,7 +121,7 @@ func (store *Store) Write() {
 	sort.Strings(keys)
 
 	var builder strings.Builder
-	builder.WriteString("###-----------start store write---------\n")
+	// builder.WriteString("###-----------start store write---------\n")
 	// TODO: Consider allowing usage of Batch, which would allow the write to
 	// at least happen atomically.
 	for _, key := range keys {
@@ -131,19 +133,19 @@ func (store *Store) Write() {
 		if cacheValue.value != nil {
 			// It already exists in the parent, hence update it.
 			store.parent.Set([]byte(key), cacheValue.value)
-			builder.WriteString("###Set key:")
-			builder.WriteString(hexutils.BytesToHex([]byte(key)))
-			builder.WriteString(", value:")
-			builder.WriteString(hexutils.BytesToHex(cacheValue.value))
-			builder.WriteString("\n")
+			// builder.WriteString("###Set key:")
+			// builder.WriteString(hexutils.BytesToHex([]byte(key)))
+			// builder.WriteString(", value:")
+			// builder.WriteString(hexutils.BytesToHex(cacheValue.value))
+			// builder.WriteString("\n")
 		} else {
 			store.parent.Delete([]byte(key))
-			builder.WriteString("###Delete key:")
-			builder.WriteString(hexutils.BytesToHex([]byte(key)))
-			builder.WriteString("\n")
+			// builder.WriteString("###Delete key:")
+			// builder.WriteString(hexutils.BytesToHex([]byte(key)))
+			// builder.WriteString("\n")
 		}
 	}
-	builder.WriteString("###-----------end store write---------\n")
+	// builder.WriteString("###-----------end store write---------\n")
 	fmt.Println(builder.String())
 
 	// Clear the cache using the map clearing idiom
