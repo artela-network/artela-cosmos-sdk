@@ -2,12 +2,15 @@ package cachekv
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"sort"
+	"strings"
 	"sync"
 
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/math"
+	"github.com/status-im/keycard-go/hexutils"
 
 	"github.com/cosmos/cosmos-sdk/internal/conv"
 	"github.com/cosmos/cosmos-sdk/store/cachekv/internal"
@@ -115,6 +118,8 @@ func (store *Store) Write() {
 
 	sort.Strings(keys)
 
+	var builder strings.Builder
+	builder.WriteString("###-----------start store write---------\n")
 	// TODO: Consider allowing usage of Batch, which would allow the write to
 	// at least happen atomically.
 	for _, key := range keys {
@@ -126,10 +131,20 @@ func (store *Store) Write() {
 		if cacheValue.value != nil {
 			// It already exists in the parent, hence update it.
 			store.parent.Set([]byte(key), cacheValue.value)
+			builder.WriteString("###Set key:")
+			builder.WriteString(hexutils.BytesToHex([]byte(key)))
+			builder.WriteString(", value:")
+			builder.WriteString(hexutils.BytesToHex(cacheValue.value))
+			builder.WriteString("\n")
 		} else {
 			store.parent.Delete([]byte(key))
+			builder.WriteString("###Delete key:")
+			builder.WriteString(hexutils.BytesToHex([]byte(key)))
+			builder.WriteString("\n")
 		}
 	}
+	builder.WriteString("###-----------end store write---------\n")
+	fmt.Println(builder.String())
 
 	// Clear the cache using the map clearing idiom
 	// and not allocating fresh objects.

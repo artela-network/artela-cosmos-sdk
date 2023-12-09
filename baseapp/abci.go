@@ -475,6 +475,10 @@ func (app *BaseApp) Commit() abci.ResponseCommit {
 	// Write the DeliverTx state into branched storage and commit the MultiStore.
 	// The write to the DeliverTx state writes all state transitions to the root
 	// MultiStore (app.cms) so when Commit() is called is persists those values.
+	fmt.Println("###start commit height:", header.Height)
+	defer func() {
+		fmt.Println("###end commit height:", header.Height)
+	}()
 	app.deliverState.ms.Write()
 	commitID := app.cms.Commit()
 
@@ -764,6 +768,18 @@ func checkNegativeHeight(height int64) error {
 			"cannot query with height < 0; please provide a valid height",
 		)
 	}
+	return nil
+}
+
+func (app *BaseApp) GetStateContext() *sdk.Context {
+	if app.deliverState != nil {
+		return &app.deliverState.ctx
+	}
+
+	if app.checkState != nil {
+		return &app.checkState.ctx
+	}
+
 	return nil
 }
 
