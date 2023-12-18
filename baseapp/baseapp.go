@@ -651,6 +651,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, re
 
 	defer func() {
 		if r := recover(); r != nil {
+			app.logger.Debug("runTx panic recovered", "mode", mode, "error", r)
 			recoveryMW := newOutOfGasRecoveryMiddleware(gasWanted, ctx, app.runTxRecoveryMiddleware)
 			err, result = processRecovery(r, recoveryMW), nil
 		}
@@ -702,7 +703,7 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, re
 				app.logger.Error("Aspect.FilterTx CreateTxPointRequest Error %s", err.Error())
 				continue
 			}
-			receive := app.aspect.FilterTx(request)
+			receive := app.aspect.FilterTx(nil, request)
 			hasErr, receiveErr := receive.HasErr()
 			if hasErr {
 				app.logger.Error("Aspect.FilterTx Return Error %s", receiveErr.Error())
