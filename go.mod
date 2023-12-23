@@ -223,3 +223,7 @@ retract (
 	// do not use
 	v0.43.0
 )
+
+replace (
+	github.com/artela-network/aspect-core => ../aspect-core
+)

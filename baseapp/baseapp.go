@@ -3,15 +3,10 @@ package baseapp
 import (
 	"errors"
 	"fmt"
-	"math/big"
 	"sort"
 	"strings"
 
 	"github.com/artela-network/aspect-core/djpm"
-	"github.com/artela-network/aspect-core/types"
-
-	"github.com/cosmos/cosmos-sdk/aspect/cosmos"
-
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
@@ -152,8 +147,7 @@ type BaseApp struct { // nolint: maligned
 	chainID string
 
 	// for artela aspect
-	aspect         *djpm.Aspect
-	aspectProvider cosmos.AspectCosmosProvider
+	aspect *djpm.Aspect
 }
 
 // NewBaseApp returns a reference to an initialized BaseApp. It accepts a
@@ -216,6 +210,10 @@ func (app *BaseApp) AppVersion() uint64 {
 // Version returns the application's version string.
 func (app *BaseApp) Version() string {
 	return app.version
+}
+
+func (app *BaseApp) ChainId() string {
+	return app.chainID
 }
 
 // Logger returns the logger of the BaseApp.
@@ -692,43 +690,6 @@ func (app *BaseApp) runTx(mode runTxMode, txBytes []byte) (gInfo sdk.GasInfo, re
 	if err := validateBasicTxMsgs(msgs); err != nil {
 		return sdk.GasInfo{}, nil, nil, 0, err
 	}
-	// --------aspect FilterTx start ---  //
-	if mode == runTxModeCheck {
-		for _, msg := range msgs {
-			if !app.GetAspectCosmosProvider().FilterAspectTx(msg) {
-				continue
-			}
-			request, err := app.GetAspectCosmosProvider().CreateTxPointRequest(ctx, msg, 0, big.NewInt(0), nil)
-			if err != nil {
-				app.logger.Error("Aspect.FilterTx CreateTxPointRequest Error %s", err.Error())
-				continue
-			}
-			receive := app.aspect.FilterTx(nil, request)
-			hasErr, receiveErr := receive.HasErr()
-			if hasErr {
-				app.logger.Error("Aspect.FilterTx Return Error %s", receiveErr.Error())
-				continue
-			}
-
-			resultMap := receive.GetExecResultMap()
-			for aspectId, response := range resultMap {
-				if response.Data == nil {
-					continue
-				}
-				txResult := new(types.BoolData)
-				anyData := response.Data
-				if resErr := anyData.UnmarshalTo(txResult); resErr != nil {
-					app.logger.Error("Aspect.FilterTx Response UnmarshalTo Error %s,%s", aspectId, resErr.Error())
-					continue
-				}
-				if !txResult.Data {
-					// todo add aspect gas
-					return sdk.GasInfo{}, nil, nil, 0, errors.New("Filter by Aspect Id " + aspectId)
-				}
-			}
-		}
-	}
-	// --------aspect FilterTx end ---  //
 
 	if app.anteHandler != nil {
 		var (
@@ -1101,7 +1062,8 @@ func (app *BaseApp) Close() error {
 }
 
 // artela aspect add -----
-// GetDeliverStateCtx exports the ctx of deliverState for aspect local call
+
+// DeliverStateCtx exports the ctx of deliverState for aspect local call
 func (app *BaseApp) DeliverStateCtx() (sdk.Context, error) {
 	if app.deliverState == nil {
 		return sdk.Context{}, errors.New("block not begin")
@@ -1109,20 +1071,10 @@ func (app *BaseApp) DeliverStateCtx() (sdk.Context, error) {
 	return app.deliverState.ctx, nil
 }
 
-// GetCheckStateCtx exports the ctx of checkState for aspect local call
+// CheckStateCtx exports the ctx of checkState for aspect local call
 func (app *BaseApp) CheckStateCtx() (sdk.Context, error) {
 	if app.checkState == nil {
 		return sdk.Context{}, errors.New("checkState is nil")
 	}
 	return app.checkState.ctx, nil
-}
-
-// GetAspectCosmosProvider
-func (app *BaseApp) GetAspectCosmosProvider() cosmos.AspectCosmosProvider {
-	return app.aspectProvider
-}
-
-func (app *BaseApp) SetAspect(provider cosmos.AspectCosmosProvider) {
-	app.aspectProvider = provider
-	app.aspect = djpm.NewAspect(provider)
 }
