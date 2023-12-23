@@ -10,8 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/artela-network/aspect-core/chaincoreext/scheduler"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -232,18 +230,6 @@ func (app *BaseApp) EndBlock(req abci.RequestEndBlock) (res abci.ResponseEndBloc
 			panic(fmt.Errorf("EndBlock listening hook failed, height: %d, err: %w", req.Height, err))
 		}
 	}
-	// schedule
-	if scheduler.TaskInstance() != nil {
-		confirm, checkErr := scheduler.TaskInstance().Check()
-		if checkErr != nil {
-			app.logger.Error(
-				"scheduler check in EndBlock",
-				"height", req.Height,
-				"time", checkErr.Error(),
-				"confirm", len(confirm),
-			)
-		}
-	}
 
 	return res
 }
@@ -298,14 +284,6 @@ func (app *BaseApp) PrepareProposal(req abci.RequestPrepareProposal) (resp abci.
 			resp = abci.ResponsePrepareProposal{Txs: req.Txs}
 		}
 	}()
-	chainID := app.chainID
-	nonce := uint64(req.Height) // use height as nonce
-	scheduler.NewTaskManager(req.Height, nonce, chainID)
-
-	scheduledTxs := scheduler.TaskInstance().GetTxs()
-	for _, scheduledTx := range scheduledTxs {
-		req.Txs = append(req.Txs, scheduledTx)
-	}
 
 	resp = app.prepareProposal(app.prepareProposalState.ctx, req)
 	return resp
@@ -436,15 +414,6 @@ func (app *BaseApp) DeliverTx(req abci.RequestDeliverTx) (res abci.ResponseDeliv
 	if err != nil {
 		resultStr = "failed"
 		return sdkerrors.ResponseDeliverTxWithEvents(err, gInfo.GasWanted, gInfo.GasUsed, sdk.MarkEventsToIndex(anteEvents, app.indexEvents), app.trace)
-	}
-
-	// scheduler remove
-	if scheduler.TaskInstance() != nil {
-		scheduleErr := scheduler.TaskInstance().Remove(req.Tx)
-		if scheduleErr != nil {
-			resultStr = "failed"
-			return sdkerrors.ResponseDeliverTxWithEvents(scheduleErr, gInfo.GasWanted, gInfo.GasUsed, sdk.MarkEventsToIndex(anteEvents, app.indexEvents), app.trace)
-		}
 	}
 
 	return abci.ResponseDeliverTx{
