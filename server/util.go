@@ -80,6 +80,7 @@ func bindFlags(basename string, cmd *cobra.Command, v *viper.Viper) (err error) 
 			err = fmt.Errorf("bindFlags failed: %v", r)
 		}
 	}()
+	fmt.Println("InterceptConfigsPreRunHandler 6.10.1")
 
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		// Environment variables can't have dashes in them, so bind them to their equivalent
@@ -129,10 +130,10 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate s
 	if err != nil {
 		return err
 	}
-	fmt.Println("InterceptConfigsPreRunHandler 2", serverCtx.Config.P2P.Seeds)
+	fmt.Println("InterceptConfigsPreRunHandler 2", serverCtx.Config.P2P.Seeds, executableName)
 
 	basename := path.Base(executableName)
-	fmt.Println("InterceptConfigsPreRunHandler 3", serverCtx.Config.P2P.Seeds)
+	fmt.Println("InterceptConfigsPreRunHandler 3", serverCtx.Config.P2P.Seeds, basename)
 
 	// configure the viper instance
 	if err := serverCtx.Viper.BindPFlags(cmd.Flags()); err != nil {
@@ -141,7 +142,7 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate s
 	if err := serverCtx.Viper.BindPFlags(cmd.PersistentFlags()); err != nil {
 		return err
 	}
-	fmt.Println("InterceptConfigsPreRunHandler 4", serverCtx.Config.P2P.Seeds)
+	fmt.Println("InterceptConfigsPreRunHandler 4", serverCtx.Config.P2P.Seeds, cmd.Flags())
 
 	serverCtx.Viper.SetEnvPrefix(basename)
 	serverCtx.Viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
@@ -165,6 +166,7 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate s
 	if err = bindFlags(basename, cmd, serverCtx.Viper); err != nil {
 		return err
 	}
+	fmt.Println("InterceptConfigsPreRunHandler 6.6", serverCtx.Config.P2P.Seeds)
 
 	var opts []log.Option
 	if serverCtx.Viper.GetString(flags.FlagLogFormat) == tmcfg.LogFormatJSON {
