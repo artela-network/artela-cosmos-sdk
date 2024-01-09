@@ -120,6 +120,7 @@ func bindFlags(basename string, cmd *cobra.Command, v *viper.Viper) (err error) 
 // to Viper.
 func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate string, customAppConfig interface{}, tmConfig *tmcfg.Config) error {
 	serverCtx := NewDefaultContext()
+	fmt.Println("InterceptConfigsPreRunHandler 1", serverCtx.Config.P2P.Seeds)
 
 	// Get the executable name and configure the viper instance so that environmental
 	// variables are checked based off that name. The underscore character is used
@@ -128,8 +129,10 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate s
 	if err != nil {
 		return err
 	}
+	fmt.Println("InterceptConfigsPreRunHandler 2", serverCtx.Config.P2P.Seeds)
 
 	basename := path.Base(executableName)
+	fmt.Println("InterceptConfigsPreRunHandler 3", serverCtx.Config.P2P.Seeds)
 
 	// configure the viper instance
 	if err := serverCtx.Viper.BindPFlags(cmd.Flags()); err != nil {
@@ -138,16 +141,19 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate s
 	if err := serverCtx.Viper.BindPFlags(cmd.PersistentFlags()); err != nil {
 		return err
 	}
+	fmt.Println("InterceptConfigsPreRunHandler 4", serverCtx.Config.P2P.Seeds)
 
 	serverCtx.Viper.SetEnvPrefix(basename)
 	serverCtx.Viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	serverCtx.Viper.AutomaticEnv()
+	fmt.Println("InterceptConfigsPreRunHandler 5", serverCtx.Config.P2P.Seeds)
 
 	// intercept configuration files, using both Viper instances separately
 	config, err := interceptConfigs(serverCtx.Viper, customAppConfigTemplate, customAppConfig, tmConfig)
 	if err != nil {
 		return err
 	}
+	fmt.Println("InterceptConfigsPreRunHandler 6", serverCtx.Config.P2P.Seeds)
 
 	// return value is a tendermint configuration object
 	serverCtx.Config = config
@@ -159,6 +165,7 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate s
 	if serverCtx.Viper.GetString(flags.FlagLogFormat) == tmcfg.LogFormatJSON {
 		opts = append(opts, log.OutputJSONOption())
 	}
+	fmt.Println("InterceptConfigsPreRunHandler 7", serverCtx.Config.P2P.Seeds)
 
 	// check and set filter level or keys for the logger if any
 	logLvlStr := serverCtx.Viper.GetString(flags.FlagLogLevel)
@@ -177,12 +184,15 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate s
 			opts = append(opts, log.LevelOption(logLvl))
 		}
 	}
+	fmt.Println("InterceptConfigsPreRunHandler 8", serverCtx.Config.P2P.Seeds)
 
 	// Check if the CometBFT flag for trace logging is set and enable stack traces if so.
 	opts = append(opts, log.TraceOption(serverCtx.Viper.GetBool("trace"))) // cmtcli.TraceFlag
+	fmt.Println("InterceptConfigsPreRunHandler 9", serverCtx.Config.P2P.Seeds)
 
 	logger := log.NewLogger(tmlog.NewSyncWriter(os.Stdout), opts...).With(log.ModuleKey, "server")
 	serverCtx.Logger = serverlog.CometLoggerWrapper{Logger: logger}
+	fmt.Println("InterceptConfigsPreRunHandler 10", serverCtx.Config.P2P.Seeds)
 
 	return SetCmdServerContext(cmd, serverCtx)
 }
