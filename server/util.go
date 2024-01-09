@@ -154,6 +154,11 @@ func InterceptConfigsPreRunHandler(cmd *cobra.Command, customAppConfigTemplate s
 		return err
 	}
 	fmt.Println("InterceptConfigsPreRunHandler 6", serverCtx.Config.P2P.Seeds)
+	fmt.Println("InterceptConfigsPreRunHandler 6.1", serverCtx.Viper)
+	fmt.Println("InterceptConfigsPreRunHandler 6.2", config)
+	fmt.Println("InterceptConfigsPreRunHandler 6.3", customAppConfigTemplate)
+	fmt.Println("InterceptConfigsPreRunHandler 6.4", customAppConfig)
+	fmt.Println("InterceptConfigsPreRunHandler 6.5", tmConfig)
 
 	// return value is a tendermint configuration object
 	serverCtx.Config = config
