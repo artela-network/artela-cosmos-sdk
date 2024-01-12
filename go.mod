@@ -12,7 +12,7 @@ require (
 	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/99designs/keyring v1.2.1
 	github.com/armon/go-metrics v0.4.1
-	github.com/artela-network/aspect-core v0.4.7-rc3
+	github.com/artela-network/aspect-core v0.4.7-rc5
 	github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/chzyer/readline v1.5.1
@@ -75,7 +75,7 @@ require (
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
-	github.com/artela-network/aspect-runtime v0.4.7-rc3 // indirect
+	github.com/artela-network/aspect-runtime v0.4.7-rc5 // indirect
 	github.com/aws/aws-sdk-go v1.44.203 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
