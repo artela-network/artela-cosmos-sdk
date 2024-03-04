@@ -8,7 +8,7 @@ require (
 	cosmossdk.io/depinject v1.0.0-alpha.3
 	cosmossdk.io/errors v1.0.0
 	cosmossdk.io/log v1.1.1-0.20230704160919-88f2c830b0ca
-	cosmossdk.io/math v1.0.1
+	cosmossdk.io/math v1.3.0
 	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/99designs/keyring v1.2.1
 	github.com/armon/go-metrics v0.4.1
@@ -63,7 +63,7 @@ require (
 	google.golang.org/protobuf v1.31.0
 	gotest.tools/v3 v3.5.0
 	pgregory.net/rapid v0.5.5
-	sigs.k8s.io/yaml v1.3.0
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
