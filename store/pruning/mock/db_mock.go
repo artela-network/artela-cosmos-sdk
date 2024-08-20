@@ -143,6 +143,12 @@ func (m *MockDB) Print() error {
 	return ret0
 }
 
+func (m *MockDB)ForceCompact(start, limit []byte) error {return nil}
+
+func (m *MockDB)NewBatchWithSize(int) db.Batch {
+	return m.NewBatch()
+}
+
 // Print indicates an expected call of Print.
 func (mr *MockDBMockRecorder) Print() *gomock.Call {
 	mr.mock.ctrl.T.Helper()

@@ -100,6 +100,12 @@ func (m *MockDB) Has(arg0 []byte) (bool, error) {
 	return ret0, ret1
 }
 
+func (m *MockDB)ForceCompact(start, limit []byte) error {return nil}
+
+func (m *MockDB)NewBatchWithSize(int) db.Batch {
+	return m.NewBatch()
+}
+
 // Has indicates an expected call of Has.
 func (mr *MockDBMockRecorder) Has(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
