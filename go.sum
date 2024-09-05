@@ -240,8 +240,8 @@ github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da/go.mod h1:Q73ZrmV
 github.com/armon/go-metrics v0.4.1 h1:hR91U9KYmb6bLBYLQjyM+3j+rcd/UhE+G78SFnF8gJA=
 github.com/armon/go-metrics v0.4.1/go.mod h1:E6amYzXo6aW1tqzoZGT755KkbgrJsSdpwZ+3JqfkOG4=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
-github.com/artela-network/aspect-core v0.4.8-rc8 h1:7KSb/NcD3HhOTirVg7mVPmknxSO1xQooNjPHe4bryZc=
-github.com/artela-network/aspect-core v0.4.8-rc8/go.mod h1:hve/4ibuIgt0HaAQrBYez1O8BQGceK8O8rGeyHoMAwg=
+github.com/artela-network/aspect-core v0.4.9-rc9 h1:TC27Al1l/e0yjPTZ2F1b9VhoGw/8cCD9uxCimRBHq4k=
+github.com/artela-network/aspect-core v0.4.9-rc9/go.mod h1:hve/4ibuIgt0HaAQrBYez1O8BQGceK8O8rGeyHoMAwg=
 github.com/artela-network/aspect-runtime v0.4.8-rc8 h1:48dbWs+4wUAL52U6JUN+hPQ7u7lDTkajoI0EcZYtwL4=
 github.com/artela-network/aspect-runtime v0.4.8-rc8/go.mod h1:GiDB2+LUbl2b2Z8+v/83LFbUKs5DqQ3ACxLUWY8zMdU=
 github.com/artela-network/cosmos-db v1.0.2-048-rc8 h1:pAC/94oLbFVE8sTP3szkliTJcR9EKtHibRI7BQliEKA=
