@@ -3,7 +3,7 @@ module cosmossdk.io/tools/rosetta
 go 1.19
 
 require (
-	cosmossdk.io/math v1.0.1
+	cosmossdk.io/math v1.4.0
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/coinbase/rosetta-sdk-go/types v1.0.0
 	github.com/cometbft/cometbft v0.37.2
@@ -11,7 +11,7 @@ require (
 	github.com/cosmos/rosetta-sdk-go v0.10.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	google.golang.org/grpc v1.56.2
 )
 
@@ -115,5 +115,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	pgregory.net/rapid v0.5.5 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
 )
