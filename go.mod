@@ -55,7 +55,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.4
 	github.com/tendermint/go-amino v0.16.0
-	github.com/tidwall/btree v1.6.0
+	github.com/tidwall/btree v1.7.0
 	golang.org/x/crypto v0.11.0
 	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
 	google.golang.org/genproto/googleapis/api v0.0.0-20230629202037-9506855d4529
